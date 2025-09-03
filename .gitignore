@@ -1,0 +1,28 @@
+# Arduino IDE workspace
+arduino_workspace/
+
+# VS Code settings (si vous l'utilisez occasionnellement)
+.vscode/
+
+# Arduino IDE cache files
+*.hex
+*.elf
+*.bin
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.bak
+*.swp
+*~
+
+# Logs
+*.log
