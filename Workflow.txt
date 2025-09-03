@@ -1,0 +1,11 @@
+Workflow de développement :
+bash# 1. Développer dans Arduino IDE
+# Fichier : arduino_workspace/poulailler_automatique/poulailler_automatique.ino
+
+# 2. Quand satisfait, synchroniser vers Git
+cp arduino_workspace/poulailler_automatique/poulailler_automatique.ino code/
+
+# 3. Commit & push normalement
+git add code/poulailler_automatique.ino
+git commit -m "Amélioration du code Arduino"
+git push
