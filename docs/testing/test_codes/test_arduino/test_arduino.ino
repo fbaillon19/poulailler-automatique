@@ -1,130 +1,130 @@
 /*
  * ============================================================================
- * TEST ARDUINO NANO BASIC - Poulailler Automatique
+ * ARDUINO NANO BASIC TEST - Automatic Chicken Coop
  * ============================================================================
  * 
  * Test: 2.1 - Arduino Nano Basic Functionality
- * Objectif: Vérifier programmation et fonctionnement de base
- * Durée: ~5 minutes
+ * Objective: Verify programming and basic operation
+ * Duration: ~5 minutes
  * 
- * Ce test vérifie:
- * - Programmation Arduino réussie
- * - Communication série fonctionnelle
- * - Boucle principale opérationnelle
- * - Pins digitales configurables
+ * This test verifies:
+ * - Successful Arduino programming
+ * - Functional serial communication
+ * - Operational main loop
+ * - Configurable digital pins
  * 
- * Procédure:
- * 1. Uploader ce code sur l'Arduino Nano
- * 2. Ouvrir le moniteur série (9600 bauds)
- * 3. Vérifier les messages réguliers
- * 4. Observer la LED intégrée qui clignote
+ * Procedure:
+ * 1. Upload this code to Arduino Nano
+ * 2. Open serial monitor (9600 baud)
+ * 3. Verify regular messages
+ * 4. Observe built-in LED blinking
  * 
- * Résultat attendu:
- * - Messages dans moniteur série toutes les secondes
- * - LED pin 13 qui clignote
- * - Compteur qui s'incrémente
+ * Expected result:
+ * - Messages in serial monitor every second
+ * - Pin 13 LED blinking
+ * - Incrementing counter
  * 
  * ============================================================================
  */
 
-// Variables globales
-unsigned long compteur = 0;
-unsigned long dernierAffichage = 0;
-bool etatLED = false;
+// Global variables
+unsigned long counter = 0;
+unsigned long lastDisplay = 0;
+bool ledState = false;
 
 void setup() {
-  // Initialisation communication série
+  // Initialize serial communication
   Serial.begin(9600);
   
-  // Configuration LED intégrée (pin 13)
+  // Configure built-in LED (pin 13)
   pinMode(LED_BUILTIN, OUTPUT);
   
-  // Configuration pins de test
-  pinMode(2, OUTPUT);   // Pin test sortie
-  pinMode(3, INPUT);    // Pin test entrée
+  // Configure test pins
+  pinMode(2, OUTPUT);   // Test output pin
+  pinMode(3, INPUT);    // Test input pin
   
-  // Message de démarrage
+  // Startup message
   Serial.println("============================================");
-  Serial.println("TEST ARDUINO NANO - Poulailler Automatique");
+  Serial.println("ARDUINO NANO TEST - Automatic Chicken Coop");
   Serial.println("============================================");
   Serial.println("Version: 1.0");
   Serial.println("Test: 2.1 - Arduino Basic Functionality");
   Serial.println("");
   
-  // Informations système
-  Serial.print("Fréquence CPU: ");
+  // System information
+  Serial.print("CPU Frequency: ");
   Serial.print(F_CPU / 1000000);
   Serial.println(" MHz");
   
-  Serial.print("Tension référence: ");
+  Serial.print("Reference Voltage: ");
   Serial.print(5.0);
   Serial.println(" V");
   
   Serial.println("");
-  Serial.println("Démarrage du test...");
-  Serial.println("Attendu: Messages toutes les secondes + LED clignote");
+  Serial.println("Starting test...");
+  Serial.println("Expected: Messages every second + LED blinks");
   Serial.println("");
   
   delay(1000);
 }
 
 void loop() {
-  // Test toutes les secondes
-  if (millis() - dernierAffichage >= 1000) {
-    dernierAffichage = millis();
-    compteur++;
+  // Test every second
+  if (millis() - lastDisplay >= 1000) {
+    lastDisplay = millis();
+    counter++;
     
-    // Basculer LED
-    etatLED = !etatLED;
-    digitalWrite(LED_BUILTIN, etatLED);
+    // Toggle LED
+    ledState = !ledState;
+    digitalWrite(LED_BUILTIN, ledState);
     
-    // Test pin sortie
-    digitalWrite(2, etatLED);
+    // Test output pin
+    digitalWrite(2, ledState);
     
-    // Affichage état
+    // Display status
     Serial.print("Test #");
-    Serial.print(compteur);
-    Serial.print(" | Temps: ");
+    Serial.print(counter);
+    Serial.print(" | Time: ");
     Serial.print(millis() / 1000);
     Serial.print("s | LED: ");
-    Serial.print(etatLED ? "ON " : "OFF");
+    Serial.print(ledState ? "ON " : "OFF");
     Serial.print(" | Pin2: ");
     Serial.print(digitalRead(2) ? "HIGH" : "LOW");
     Serial.print(" | Pin3: ");
     Serial.print(digitalRead(3) ? "HIGH" : "LOW");
-    Serial.print(" | RAM libre: ");
+    Serial.print(" | Free RAM: ");
     Serial.print(getFreeMemory());
     Serial.println(" bytes");
     
-    // Messages de statut périodiques
-    if (compteur % 10 == 0) {
+    // Periodic status messages
+    if (counter % 10 == 0) {
       Serial.println("");
-      Serial.print("✅ Arduino fonctionne depuis ");
-      Serial.print(compteur);
-      Serial.println(" secondes");
+      Serial.print("✅ Arduino running for ");
+      Serial.print(counter);
+      Serial.println(" seconds");
       Serial.println("");
     }
     
-    // Test terminé après 30 secondes
-    if (compteur >= 30) {
+    // Test completed after 30 seconds
+    if (counter >= 30) {
       Serial.println("");
       Serial.println("============================================");
-      Serial.println("✅ TEST ARDUINO NANO TERMINÉ AVEC SUCCÈS");
+      Serial.println("✅ ARDUINO NANO TEST COMPLETED SUCCESSFULLY");
       Serial.println("============================================");
       Serial.println("");
-      Serial.println("Résultats:");
-      Serial.print("- Durée du test: ");
-      Serial.print(compteur);
-      Serial.println(" secondes");
-      Serial.println("- Communication série: OK");
-      Serial.println("- Boucle principale: OK");
-      Serial.println("- Contrôle pins: OK");
-      Serial.println("- LED intégrée: OK");
+      Serial.println("Results:");
+      Serial.print("- Test duration: ");
+      Serial.print(counter);
+      Serial.println(" seconds");
+      Serial.println("- Serial communication: OK");
+      Serial.println("- Main loop: OK");
+      Serial.println("- Pin control: OK");
+      Serial.println("- Built-in LED: OK");
       Serial.println("");
-      Serial.println("➡️  Prêt pour le test suivant: RTC DS3231");
+      Serial.println("➡️  Ready for next test: RTC DS3231");
       Serial.println("");
       
-      // Clignotement rapide de succès
+      // Success blinking
       for (int i = 0; i < 10; i++) {
         digitalWrite(LED_BUILTIN, HIGH);
         delay(100);
@@ -132,7 +132,7 @@ void loop() {
         delay(100);
       }
       
-      // Arrêt du test (boucle infinie)
+      // Stop test (infinite loop)
       while (true) {
         digitalWrite(LED_BUILTIN, HIGH);
         delay(1000);
@@ -142,13 +142,13 @@ void loop() {
     }
   }
   
-  // Autres traitements légers
+  // Other light processing
   delay(10);
 }
 
 /*
- * Fonction utilitaire: Calcul mémoire libre
- * Aide à détecter les fuites mémoire
+ * Utility function: Calculate free memory
+ * Helps detect memory leaks
  */
 int getFreeMemory() {
   extern int __heap_start, *__brkval;
@@ -158,35 +158,35 @@ int getFreeMemory() {
 
 /*
  * ============================================================================
- * DIAGNOSTIC ET DÉPANNAGE
+ * DIAGNOSTICS AND TROUBLESHOOTING
  * ============================================================================
  * 
- * Problèmes possibles:
+ * Possible problems:
  * 
- * ❌ Pas de messages dans moniteur série:
- *    - Vérifier port COM sélectionné
- *    - Vérifier vitesse 9600 bauds
- *    - Vérifier câble USB
- *    - Redémarrer Arduino IDE
+ * ❌ No messages in serial monitor:
+ *    - Check selected COM port
+ *    - Check 9600 baud rate
+ *    - Check USB cable
+ *    - Restart Arduino IDE
  * 
- * ❌ LED ne clignote pas:
- *    - Arduino possiblement défaillant
- *    - Problème alimentation
- *    - Pin 13 endommagée
+ * ❌ LED not blinking:
+ *    - Arduino possibly defective
+ *    - Power supply problem
+ *    - Pin 13 damaged
  * 
- * ❌ Messages erratiques:
- *    - Alimentation instable
- *    - Parasites électriques
- *    - Câble USB défaillant
+ * ❌ Erratic messages:
+ *    - Unstable power supply
+ *    - Electrical interference
+ *    - Defective USB cable
  * 
- * ❌ RAM libre diminue:
- *    - Fuite mémoire (ne devrait pas arriver dans ce test)
- *    - Problème plus grave Arduino
+ * ❌ Free RAM decreasing:
+ *    - Memory leak (shouldn't happen in this test)
+ *    - More serious Arduino problem
  * 
- * ❌ Test ne se termine jamais:
- *    - Horloge Arduino défaillante
- *    - Fonction millis() bloquée
- *    - Redémarrer Arduino
+ * ❌ Test never ends:
+ *    - Defective Arduino clock
+ *    - Blocked millis() function
+ *    - Restart Arduino
  * 
  * ============================================================================
  */

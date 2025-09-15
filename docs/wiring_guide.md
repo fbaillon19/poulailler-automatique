@@ -97,17 +97,17 @@ GND     →   GND
 ## ⚡ Power Supply Schematic
 
 ```
-12V 2A Power Supply
+12V 1A Power Supply
 │
-├─── L298N (+12V, motor)
+└─── L298N (+12V, motor)
+
+5V 1A Power Supply
 │
-└─── 5V Regulator (LM7805 + capacitors)
-     │
-     ├─── Arduino Nano (5V)
-     ├─── RTC DS3231 (5V)
-     ├─── LCD I2C (5V)  
-     ├─── LED + resistor (5V)
-     └─── Sensor pull-ups (5V)
+├─── Arduino Nano (5V)
+├─── RTC DS3231 (5V)
+├─── LCD I2C (5V)  
+├─── LED + resistor (5V)
+└─── Sensor pull-ups (5V)
 ```
 
 ## 🔍 Important Points

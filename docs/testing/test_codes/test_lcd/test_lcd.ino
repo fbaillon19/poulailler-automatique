@@ -1,36 +1,36 @@
 /*
  * ============================================================================
- * TEST LCD I2C 16x2 - Poulailler Automatique
+ * LCD I2C 16x2 TEST - Automatic Chicken Coop
  * ============================================================================
  * 
  * Test: 2.3 - LCD I2C Display Functionality
- * Objectif: Vérifier affichage LCD et communication I2C
- * Durée: ~5 minutes
+ * Objective: Verify LCD display and I2C communication
+ * Duration: ~5 minutes
  * 
- * Ce test vérifie:
- * - Communication I2C avec module LCD
- * - Affichage texte sur les 2 lignes
- * - Fonctionnement rétroéclairage
- * - Positionnement curseur
- * - Caractères spéciaux et animations
+ * This test verifies:
+ * - I2C communication with LCD module
+ * - Text display on both lines
+ * - Backlight functionality
+ * - Cursor positioning
+ * - Special characters and animations
  * 
- * Câblage requis:
+ * Required wiring:
  * LCD I2C VCC → Arduino 5V
  * LCD I2C GND → Arduino GND  
  * LCD I2C SDA → Arduino A4
  * LCD I2C SCL → Arduino A5
  * 
- * Procédure:
- * 1. Uploader ce code sur l'Arduino Nano
- * 2. Vérifier affichage sur LCD (pas de moniteur série nécessaire)
- * 3. Observer séquences d'affichage automatiques
- * 4. Vérifier lisibilité et contraste
+ * Procedure:
+ * 1. Upload this code to Arduino Nano
+ * 2. Verify display on LCD (no serial monitor needed)
+ * 3. Observe automatic display sequences
+ * 4. Check readability and contrast
  * 
- * Résultat attendu:
- * - Texte visible et lisible sur LCD
- * - Rétroéclairage fonctionnel
- * - Animations et compteurs qui bougent
- * - Pas de caractères corrompus
+ * Expected result:
+ * - Visible and readable text on LCD
+ * - Functional backlight
+ * - Moving animations and counters
+ * - No corrupted characters
  * 
  * ============================================================================
  */
@@ -38,46 +38,46 @@
 #include <Wire.h>
 #include <LiquidCrystal_I2C.h>
 
-// Configuration LCD (adresse 0x27 standard, taille 16x2)
+// LCD configuration (standard address 0x27, size 16x2)
 LiquidCrystal_I2C lcd(0x27, 16, 2);
 
-// Variables globales
-unsigned long dernierUpdate = 0;
-unsigned long compteur = 0;
+// Global variables
+unsigned long lastUpdate = 0;
+unsigned long counter = 0;
 int phase = 0;
-bool lcdInitialise = false;
+bool lcdInitialized = false;
 
 void setup() {
-  // Initialisation communication série (pour debug)
+  // Initialize serial communication (for debug)
   Serial.begin(9600);
   
   Serial.println("============================================");
-  Serial.println("TEST LCD I2C 16x2 - Poulailler Automatique");
+  Serial.println("LCD I2C 16x2 TEST - Automatic Chicken Coop");
   Serial.println("============================================");
   Serial.println("Test: 2.3 - LCD I2C Display");
   Serial.println("");
-  Serial.println("🖥️  Initialisation LCD I2C...");
+  Serial.println("🖥️  Initializing LCD I2C...");
   
-  // Test de plusieurs adresses I2C communes
-  Serial.println("🔍 Recherche LCD sur bus I2C...");
+  // Test multiple common I2C addresses
+  Serial.println("🔍 Searching for LCD on I2C bus...");
   
-  // Essai adresse 0x27 (la plus commune)
+  // Try address 0x27 (most common)
   lcd.init();
   lcd.backlight();
   
-  // Test simple d'écriture
+  // Simple write test
   lcd.setCursor(0, 0);
-  lcd.print("Test LCD...");
+  lcd.print("Testing LCD...");
   delay(1000);
   
-  // Vérification si LCD répond
+  // Check if LCD responds
   Wire.beginTransmission(0x27);
   if (Wire.endTransmission() == 0) {
-    Serial.println("✅ LCD trouvé à l'adresse 0x27");
-    lcdInitialise = true;
+    Serial.println("✅ LCD found at address 0x27");
+    lcdInitialized = true;
   } else {
-    // Essai adresse alternative 0x3F
-    Serial.println("❌ Pas de LCD à 0x27, essai 0x3F...");
+    // Try alternative address 0x3F
+    Serial.println("❌ No LCD at 0x27, trying 0x3F...");
     LiquidCrystal_I2C lcd_alt(0x3F, 16, 2);
     lcd = lcd_alt;
     lcd.init();
@@ -85,18 +85,18 @@ void setup() {
     
     Wire.beginTransmission(0x3F);
     if (Wire.endTransmission() == 0) {
-      Serial.println("✅ LCD trouvé à l'adresse 0x3F");
-      lcdInitialise = true;
+      Serial.println("✅ LCD found at address 0x3F");
+      lcdInitialized = true;
     } else {
-      Serial.println("❌ ÉCHEC: Aucun LCD trouvé sur I2C !");
+      Serial.println("❌ FAILURE: No LCD found on I2C!");
       Serial.println("");
-      Serial.println("Vérifications à effectuer:");
-      Serial.println("- Câblage I2C: SDA→A4, SCL→A5");
-      Serial.println("- Alimentation: VCC→5V, GND→GND");
-      Serial.println("- Module LCD I2C fonctionnel");
-      Serial.println("- Adresse I2C: scanner pour trouver");
+      Serial.println("Checks to perform:");
+      Serial.println("- I2C wiring: SDA→A4, SCL→A5");
+      Serial.println("- Power supply: VCC→5V, GND→GND");
+      Serial.println("- LCD I2C module functional");
+      Serial.println("- I2C address: scan to find");
       Serial.println("");
-      Serial.println("⏸️  Test arrêté - Corriger et relancer");
+      Serial.println("⏸️  Test stopped - Fix and restart");
       
       while(true) {
         delay(1000);
@@ -104,73 +104,73 @@ void setup() {
     }
   }
   
-  // Initialisation réussie
+  // Successful initialization
   lcd.clear();
   lcd.setCursor(0, 0);
   lcd.print("LCD I2C OK!");
   lcd.setCursor(0, 1);
-  lcd.print("Test commence...");
+  lcd.print("Test starting...");
   
-  Serial.println("✅ LCD initialisé avec succès");
-  Serial.println("👀 Regardez l'écran LCD pour la suite du test");
+  Serial.println("✅ LCD initialized successfully");
+  Serial.println("👀 Watch the LCD screen for the rest of the test");
   Serial.println("");
   
   delay(2000);
 }
 
 void loop() {
-  if (!lcdInitialise) return;
+  if (!lcdInitialized) return;
   
-  // Mise à jour toutes les 500ms
-  if (millis() - dernierUpdate >= 500) {
-    dernierUpdate = millis();
-    compteur++;
+  // Update every 500ms
+  if (millis() - lastUpdate >= 500) {
+    lastUpdate = millis();
+    counter++;
     
-    // Différentes phases de test
+    // Different test phases
     switch (phase) {
       case 0:
-        testAffichageBase();
-        if (compteur >= 10) { // 5 secondes
+        testBasicDisplay();
+        if (counter >= 10) { // 5 seconds
           phase++;
-          compteur = 0;
+          counter = 0;
         }
         break;
         
       case 1:
-        testPositionnement();
-        if (compteur >= 10) { // 5 secondes
+        testPositioning();
+        if (counter >= 10) { // 5 seconds
           phase++;
-          compteur = 0;
+          counter = 0;
         }
         break;
         
       case 2:
-        testCaracteresSpeciaux();
-        if (compteur >= 10) { // 5 secondes
+        testSpecialCharacters();
+        if (counter >= 10) { // 5 seconds
           phase++;
-          compteur = 0;
+          counter = 0;
         }
         break;
         
       case 3:
         testAnimations();
-        if (compteur >= 20) { // 10 secondes
+        if (counter >= 20) { // 10 seconds
           phase++;
-          compteur = 0;
+          counter = 0;
         }
         break;
         
       case 4:
-        testSimulationInterface();
-        if (compteur >= 20) { // 10 secondes
+        testInterfaceSimulation();
+        if (counter >= 20) { // 10 seconds
           phase++;
-          compteur = 0;
+          counter = 0;
         }
         break;
         
       case 5:
         testFinal();
-        // Phase finale, reste ici
+        // Final phase, stay here
         break;
     }
   }
@@ -179,155 +179,155 @@ void loop() {
 }
 
 /*
- * Phase 0: Test affichage de base
+ * Phase 0: Basic display test
  */
-void testAffichageBase() {
+void testBasicDisplay() {
   lcd.clear();
   lcd.setCursor(0, 0);
-  lcd.print("TEST AFFICHAGE");
+  lcd.print("DISPLAY TEST");
   lcd.setCursor(0, 1);
   lcd.print("Phase 1/6 - ");
-  lcd.print(6 - (compteur/2));
+  lcd.print(6 - (counter/2));
   
-  Serial.print("Phase 1: Affichage de base - ");
-  Serial.print(6 - (compteur/2));
+  Serial.print("Phase 1: Basic display - ");
+  Serial.print(6 - (counter/2));
   Serial.println("s");
 }
 
 /*
- * Phase 1: Test positionnement curseur
+ * Phase 1: Cursor positioning test
  */
-void testPositionnement() {
+void testPositioning() {
   lcd.clear();
   lcd.setCursor(0, 0);
-  lcd.print("POSITIONNEMENT");
+  lcd.print("POSITIONING");
   
-  // Affichage caractère qui bouge
-  int pos = compteur % 16;
+  // Moving character display
+  int pos = counter % 16;
   lcd.setCursor(pos, 1);
   lcd.print("*");
   
-  Serial.print("Phase 2: Positionnement curseur - pos ");
+  Serial.print("Phase 2: Cursor positioning - pos ");
   Serial.println(pos);
 }
 
 /*
- * Phase 2: Test caractères spéciaux
+ * Phase 2: Special characters test
  */
-void testCaracteresSpeciaux() {
+void testSpecialCharacters() {
   lcd.clear();
   lcd.setCursor(0, 0);
-  lcd.print("CARACTERES");
+  lcd.print("CHARACTERS");
   lcd.setCursor(0, 1);
   
-  char caracteres[] = {'!', '@', '#', '$', '%', '^', '&', '*', '(', ')'};
+    char characters[] = {'!', '@', '#', '$', '%', '^', '&', '*', '(', ')'};
   for (int i = 0; i < 10; i++) {
     lcd.setCursor(i, 1);
-    lcd.print(caracteres[i]);
+    lcd.print(characters[i]);
   }
   
-  // Caractères graphiques si supportés
+  // Graphic characters if supported
   lcd.setCursor(12, 1);
-  lcd.print((char)0xFF); // Bloc plein
+  lcd.print((char)0xFF); // Full block
   lcd.setCursor(13, 1);
-  lcd.print((char)0xFE); // Bloc partiel
+  lcd.print((char)0xFE); // Partial block
   
-  Serial.println("Phase 3: Caractères spéciaux");
+  Serial.println("Phase 3: Special characters");
 }
 
 /*
- * Phase 3: Test animations
+ * Phase 3: Animation test
  */
 void testAnimations() {
   lcd.clear();
   lcd.setCursor(0, 0);
   lcd.print("ANIMATIONS");
   
-  // Barre de progression
-  int progress = (compteur * 16) / 20;
+  // Progress bar
+  int progress = (counter * 16) / 20;
   lcd.setCursor(0, 1);
   for (int i = 0; i < 16; i++) {
     if (i < progress) {
-      lcd.print((char)0xFF); // Bloc plein
+      lcd.print((char)0xFF); // Full block
     } else {
       lcd.print("-");
     }
   }
   
-  Serial.print("Phase 4: Animations - progression ");
-  Serial.print((compteur * 100) / 20);
+  Serial.print("Phase 4: Animations - progress ");
+  Serial.print((counter * 100) / 20);
   Serial.println("%");
 }
 
 /*
- * Phase 4: Simulation interface réelle
+ * Phase 4: Real interface simulation
  */
-void testSimulationInterface() {
+void testInterfaceSimulation() {
   lcd.clear();
   
-  // Simulation affichage heure
+  // Time display simulation
   lcd.setCursor(0, 0);
-  int heures = (compteur / 4) % 24;
-  int minutes = (compteur * 3) % 60;
-  if (heures < 10) lcd.print("0");
-  lcd.print(heures);
+  int hours = (counter / 4) % 24;
+  int minutes = (counter * 3) % 60;
+  if (hours < 10) lcd.print("0");
+  lcd.print(hours);
   lcd.print(":");
   if (minutes < 10) lcd.print("0");
   lcd.print(minutes);
   lcd.print("      ");
   
-  // Simulation statut porte
+  // Door status simulation
   lcd.setCursor(0, 1);
   const char* status[] = {
-    "Porte ouverte   ",
-    "Porte fermee    ",
-    "Ouverture...    ",
-    "Fermeture...    ",
-    "Ferme dans 5mn  "
+    "Door open       ",
+    "Door closed     ",
+    "Opening...      ",
+    "Closing...      ",
+    "Closes in 5min  "
   };
   
-  int statusIndex = (compteur / 4) % 5;
+  int statusIndex = (counter / 4) % 5;
   lcd.print(status[statusIndex]);
   
-  Serial.print("Phase 5: Interface réelle - ");
+  Serial.print("Phase 5: Real interface - ");
   Serial.println(status[statusIndex]);
 }
 
 /*
- * Phase 5: Test final et résultats
+ * Phase 5: Final test and results
  */
 void testFinal() {
-  if (compteur == 1) {
-    // Premier affichage des résultats
+  if (counter == 1) {
+    // First display of results
     Serial.println("");
     Serial.println("============================================");
-    Serial.println("✅ TEST LCD I2C TERMINÉ AVEC SUCCÈS");
+    Serial.println("✅ LCD I2C TEST COMPLETED SUCCESSFULLY");
     Serial.println("============================================");
     Serial.println("");
-    Serial.println("📊 Résultats du test:");
-    Serial.println("- Communication I2C: OK");
-    Serial.println("- Affichage texte: OK");
-    Serial.println("- Positionnement curseur: OK");
-    Serial.println("- Caractères spéciaux: OK");
+    Serial.println("📊 Test results:");
+    Serial.println("- I2C communication: OK");
+    Serial.println("- Text display: OK");
+    Serial.println("- Cursor positioning: OK");
+    Serial.println("- Special characters: OK");
     Serial.println("- Animations: OK");
-    Serial.println("- Simulation interface: OK");
+    Serial.println("- Interface simulation: OK");
     Serial.println("");
-    Serial.println("➡️  Prêt pour le test suivant: Capteurs");
+    Serial.println("➡️  Ready for next test: Sensors");
     Serial.println("");
   }
   
-  // Affichage final permanent
+  // Permanent final display
   lcd.clear();
   lcd.setCursor(0, 0);
-  lcd.print("TEST LCD OK!");
+  lcd.print("LCD TEST OK!");
   lcd.setCursor(0, 1);
   
-  // Compteur final qui s'incrémente
-  lcd.print("Compteur: ");
-  lcd.print(compteur);
+  // Final incrementing counter
+  lcd.print("Counter: ");
+  lcd.print(counter);
   
-  // Clignotement pour montrer que ça marche
-  if ((compteur % 4) < 2) {
+  // Blinking to show it's working
+  if ((counter % 4) < 2) {
     lcd.setCursor(15, 0);
     lcd.print("*");
   } else {
@@ -338,40 +338,40 @@ void testFinal() {
 
 /*
  * ============================================================================
- * DIAGNOSTIC ET DÉPANNAGE
+ * DIAGNOSTICS AND TROUBLESHOOTING
  * ============================================================================
  * 
- * ❌ Écran complètement noir:
- *    - Vérifier alimentation: VCC→5V, GND→GND
- *    - Vérifier câblage I2C: SDA→A4, SCL→A5
- *    - Tourner potentiomètre contraste sur module LCD
- *    - Module LCD défaillant
+ * ❌ Screen completely black:
+ *    - Check power supply: VCC→5V, GND→GND
+ *    - Check I2C wiring: SDA→A4, SCL→A5
+ *    - Turn contrast potentiometer on LCD module
+ *    - Defective LCD module
  * 
- * ❌ Rétroéclairage allumé mais pas de texte:
- *    - Problème adresse I2C (essayer 0x3F au lieu de 0x27)
- *    - Régler contraste (potentiomètre sur module)
- *    - Vérifier soudures module LCD
- *    - Problème communication I2C
+ * ❌ Backlight on but no text:
+ *    - I2C address problem (try 0x3F instead of 0x27)
+ *    - Adjust contrast (potentiometer on module)
+ *    - Check LCD module solder joints
+ *    - I2C communication problem
  * 
- * ❌ Caractères bizarres/corrompus:
- *    - Alimentation instable (ajouter condensateur 100µF)
- *    - Parasites électriques
- *    - Fils I2C trop longs (max 1 mètre)
- *    - Vitesse I2C trop rapide
+ * ❌ Strange/corrupted characters:
+ *    - Unstable power supply (add 100µF capacitor)
+ *    - Electrical interference
+ *    - I2C wires too long (max 1 meter)
+ *    - I2C speed too fast
  * 
- * ❌ Affichage intermittent:
- *    - Faux contacts connexions
- *    - Alimentation insuffisante
- *    - Module LCD défaillant
- *    - Interférences électromagnétiques
+ * ❌ Intermittent display:
+ *    - Poor connection contacts
+ *    - Insufficient power supply
+ *    - Defective LCD module
+ *    - Electromagnetic interference
  * 
- * ❌ "Aucun LCD trouvé sur I2C":
- *    - Scanner I2C pour trouver adresse réelle
- *    - Vérifier câblage complet
- *    - Tester avec multimètre (3.3-5V sur VCC)
- *    - Remplacer module LCD I2C
+ * ❌ "No LCD found on I2C":
+ *    - I2C scan to find real address
+ *    - Check complete wiring
+ *    - Test with multimeter (3.3-5V on VCC)
+ *    - Replace LCD I2C module
  * 
- * 🔧 Scanner I2C (code utile):
+ * 🔧 I2C Scanner (useful code):
  * 
  * Wire.begin();
  * for(int addr = 1; addr < 127; addr++) {

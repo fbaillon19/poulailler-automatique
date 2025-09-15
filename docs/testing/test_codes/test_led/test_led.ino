@@ -1,384 +1,377 @@
 /*
  * ============================================================================
- * TEST LED STATUT - Poulailler Automatique
+ * STATUS LED TEST - Automatic Chicken Coop
  * ============================================================================
  * 
  * Test: 4.1 - Status LED Blinking
- * Objectif: Vérifier contrôle LED et patterns de clignotement
- * Durée: ~3 minutes
+ * Objective: Verify LED control and blinking patterns
+ * Duration: ~3 minutes
  * 
- * Ce test vérifie:
- * - Contrôle LED marche/arrêt
- * - Différents patterns de clignotement
- * - Timing précis des clignotements
- * - Résistance de limitation correcte
+ * This test verifies:
+ * - LED on/off control
+ * - Different blinking patterns
+ * - Precise blinking timing
+ * - Correct limiting resistor
  * 
- * Câblage requis:
- * Arduino D3 → Résistance 220Ω → LED Anode (+)
+ * Required wiring:
+ * Arduino D3 → 220Ω Resistor → LED Anode (+)
  * LED Cathode (-) → Arduino GND
  * 
- * Procédure:
- * 1. Uploader ce code sur l'Arduino Nano
- * 2. Observer la LED (pas de moniteur série nécessaire)
- * 3. Vérifier les différentes séquences de clignotement
- * 4. Optionnel: Ouvrir moniteur série pour détails
+ * Procedure:
+ * 1. Upload this code to Arduino Nano
+ * 2. Observe the LED (no serial monitor needed)
+ * 3. Verify different blinking sequences
+ * 4. Optional: Open serial monitor for details
  * 
- * Résultat attendu:
- * - LED s'allume et s'éteint correctement
- * - Différents rythmes de clignotement visibles
- * - Luminosité suffisante mais pas excessive
+ * Expected result:
+ * - LED turns on and off correctly
+ * - Different blinking rhythms visible
+ * - Sufficient brightness but not excessive
  * 
  * ============================================================================
  */
 
 // Configuration
-const int LED_COUPURE = 3;                    // Pin de la LED
-const unsigned long DUREE_TEST = 180000;      // 3 minutes de test
+const int STATUS_LED = 3;                     // LED pin
+const unsigned long TEST_DURATION = 180000;   // 3 minutes test
 
-// Variables globales
-unsigned long debutTest = 0;
-unsigned long dernierClignotement = 0;
-bool etatLED = false;
-int phaseTest = 0;
-unsigned long debutPhase = 0;
+// Global variables
+unsigned long testStart = 0;
+unsigned long lastBlink = 0;
+bool ledState = false;
+int testPhase = 0;
+unsigned long phaseStart = 0;
 
 void setup() {
-  // Initialisation communication série (optionnelle)
+  // Initialize serial communication (optional)
   Serial.begin(9600);
   delay(1000);
   
   Serial.println("============================================");
-  Serial.println("TEST LED STATUT - Poulailler Automatique");
+  Serial.println("STATUS LED TEST - Automatic Chicken Coop");
   Serial.println("============================================");
   Serial.println("Version: 1.0");
   Serial.println("Test: 4.1 - Status LED Blinking");
   Serial.println("");
   
-  // Configuration de la LED
-  pinMode(LED_COUPURE, OUTPUT);
+  // LED configuration
+  pinMode(STATUS_LED, OUTPUT);
   
-  // Test initial - LED éteinte
-  digitalWrite(LED_COUPURE, LOW);
+  // Initial test - LED off
+  digitalWrite(STATUS_LED, LOW);
   
-  Serial.println("💡 Configuration LED:");
-  Serial.println("- Pin utilisée: D3");
-  Serial.println("- Résistance: 220Ω (obligatoire)");
-  Serial.println("- Polarité: Anode via résistance, Cathode à GND");
+  Serial.println("💡 LED Configuration:");
+  Serial.println("- Pin used: D3");
+  Serial.println("- Resistor: 220Ω (mandatory)");
+  Serial.println("- Polarity: Anode via resistor, Cathode to GND");
   Serial.println("");
   
-  Serial.println("👀 REGARDEZ LA LED pendant le test:");
-  Serial.println("Le moniteur série est optionnel");
+  Serial.println("👀 WATCH THE LED during test:");
+  Serial.println("Serial monitor is optional");
   Serial.println("");
   
-  Serial.println("🕐 Séquences de test (3 minutes):");
-  Serial.println("1. Test ON/OFF basique");
-  Serial.println("2. Clignotement lent (1s)");
-  Serial.println("3. Clignotement normal (500ms)");
-  Serial.println("4. Clignotement rapide (200ms)");
-  Serial.println("5. Pattern SOS (... --- ...)");
-  Serial.println("6. Clignotement final continu");
+  Serial.println("🕐 Test sequences (3 minutes):");
+  Serial.println("1. Basic ON/OFF test");
+  Serial.println("2. Slow blinking (1s)");
+  Serial.println("3. Normal blinking (500ms)");
+  Serial.println("4. Fast blinking (200ms)");
+  Serial.println("5. SOS pattern (... --- ...)");
+  Serial.println("6. Final continuous blinking");
   Serial.println("");
   
-  debutTest = millis();
-  debutPhase = millis();
+  testStart = millis();
+  phaseStart = millis();
   
   delay(2000);
 }
 
 void loop() {
-  unsigned long tempsEcoule = millis() - debutTest;
+  unsigned long elapsedTime = millis() - testStart;
   
-  // Gestion des phases de test
-  if (tempsEcoule < 30000) {        // 0-30s: Test ON/OFF
-    phaseTest = 1;
+  // Test phase management
+  if (elapsedTime < 30000) {        // 0-30s: ON/OFF test
+    testPhase = 1;
     testOnOff();
-  } else if (tempsEcoule < 60000) { // 30-60s: Clignotement lent
-    if (phaseTest != 2) {
-      phaseTest = 2;
-      debutPhase = millis();
-      Serial.println("Phase 2: Clignotement lent (1000ms)");
+  } else if (elapsedTime < 60000) { // 30-60s: Slow blinking
+    if (testPhase != 2) {
+      testPhase = 2;
+      phaseStart = millis();
+      Serial.println("Phase 2: Slow blinking (1000ms)");
     }
-    clignoterAvecPeriode(1000);
-  } else if (tempsEcoule < 90000) { // 60-90s: Clignotement normal
-    if (phaseTest != 3) {
-      phaseTest = 3;
-      debutPhase = millis();
-      Serial.println("Phase 3: Clignotement normal (500ms)");
+    blinkWithPeriod(1000);
+  } else if (elapsedTime < 90000) { // 60-90s: Normal blinking
+    if (testPhase != 3) {
+      testPhase = 3;
+      phaseStart = millis();
+      Serial.println("Phase 3: Normal blinking (500ms)");
     }
-    clignoterAvecPeriode(500);
-  } else if (tempsEcoule < 120000) { // 90-120s: Clignotement rapide
-    if (phaseTest != 4) {
-      phaseTest = 4;
-      debutPhase = millis();
-      Serial.println("Phase 4: Clignotement rapide (200ms)");
+    blinkWithPeriod(500);
+  } else if (elapsedTime < 120000) { // 90-120s: Fast blinking
+    if (testPhase != 4) {
+      testPhase = 4;
+      phaseStart = millis();
+      Serial.println("Phase 4: Fast blinking (200ms)");
     }
-    clignoterAvecPeriode(200);
-  } else if (tempsEcoule < 150000) { // 120-150s: Pattern SOS
-    if (phaseTest != 5) {
-      phaseTest = 5;
-      debutPhase = millis();
-      Serial.println("Phase 5: Pattern SOS (... --- ...)");
+    blinkWithPeriod(200);
+  } else if (elapsedTime < 150000) { // 120-150s: SOS pattern
+    if (testPhase != 5) {
+      testPhase = 5;
+      phaseStart = millis();
+      Serial.println("Phase 5: SOS pattern (... --- ...)");
     }
-    patternSOS();
-  } else { // 150s+: Test final
-    if (phaseTest != 6) {
-      phaseTest = 6;
-      Serial.println("Phase 6: Test final - Clignotement continu");
-      afficherResultatsFinaux();
+    sosPattern();
+  } else { // 150s+: Final test
+    if (testPhase != 6) {
+      testPhase = 6;
+      Serial.println("Phase 6: Final test - Continuous blinking");
+      displayFinalResults();
     }
-    clignoterAvecPeriode(500);
+    blinkWithPeriod(500);
   }
   
   delay(10);
 }
 
 /*
- * Phase 1: Test ON/OFF basique
+ * Phase 1: Basic ON/OFF test
  */
 void testOnOff() {
-  unsigned long tempsPhase = millis() - debutPhase;
+  unsigned long phaseTime = millis() - phaseStart;
   
-  if (tempsPhase < 5000) {
-    // 0-5s: LED allumée en permanence
-    if (!etatLED) {
-      digitalWrite(LED_COUPURE, HIGH);
-      etatLED = true;
-      Serial.println("Phase 1a: LED ALLUMÉE (5 secondes)");
+  if (phaseTime < 5000) {
+    // 0-5s: LED permanently on
+    if (!ledState) {
+      digitalWrite(STATUS_LED, LOW);
+      ledState = false;
+      Serial.println("Phase 1b: LED OFF (5 seconds)");
     }
-  } else if (tempsPhase < 10000) {
-    // 5-10s: LED éteinte en permanence
-    if (etatLED) {
-      digitalWrite(LED_COUPURE, LOW);
-      etatLED = false;
-      Serial.println("Phase 1b: LED ÉTEINTE (5 secondes)");
-    }
-  } else if (tempsPhase < 30000) {
-    // 10-30s: Alternance lente ON/OFF toutes les 2 secondes
-    if (millis() - dernierClignotement >= 2000) {
-      etatLED = !etatLED;
-      digitalWrite(LED_COUPURE, etatLED);
-      dernierClignotement = millis();
+  } else if (phaseTime < 30000) {
+    // 10-30s: Slow alternation ON/OFF every 2 seconds
+    if (millis() - lastBlink >= 2000) {
+      ledState = !ledState;
+      digitalWrite(STATUS_LED, ledState);
+      lastBlink = millis();
       
-      static int compteur = 0;
-      if (compteur % 4 == 0) {
-        Serial.print("Phase 1c: Alternance lente ");
-        Serial.println(etatLED ? "ON" : "OFF");
+      static int counter = 0;
+      if (counter % 4 == 0) {
+        Serial.print("Phase 1c: Slow alternation ");
+        Serial.println(ledState ? "ON" : "OFF");
       }
-      compteur++;
+      counter++;
     }
   }
 }
 
 /*
- * Fonction: Clignotement avec période donnée
+ * Function: Blinking with given period
  */
-void clignoterAvecPeriode(unsigned long periode) {
-  if (millis() - dernierClignotement >= periode) {
-    etatLED = !etatLED;
-    digitalWrite(LED_COUPURE, etatLED);
-    dernierClignotement = millis();
+void blinkWithPeriod(unsigned long period) {
+  if (millis() - lastBlink >= period) {
+    ledState = !ledState;
+    digitalWrite(STATUS_LED, ledState);
+    lastBlink = millis();
     
-    // Log occasionnel pour ne pas spammer
-    static unsigned long dernierLog = 0;
-    if (millis() - dernierLog > 5000) {
-      Serial.print("Clignotement ");
-      Serial.print(periode);
-      Serial.print("ms - État: ");
-      Serial.println(etatLED ? "ON" : "OFF");
-      dernierLog = millis();
+    // Occasional log to avoid spam
+    static unsigned long lastLog = 0;
+    if (millis() - lastLog > 5000) {
+      Serial.print("Blinking ");
+      Serial.print(period);
+      Serial.print("ms - State: ");
+      Serial.println(ledState ? "ON" : "OFF");
+      lastLog = millis();
     }
   }
 }
 
 /*
- * Fonction: Pattern SOS (... --- ...)
+ * Function: SOS Pattern (... --- ...)
  */
-void patternSOS() {
-  static int etapeSOS = 0;
-  static unsigned long debutEtape = 0;
-  static bool premierPassage = true;
+void sosPattern() {
+  static int sosStep = 0;
+  static unsigned long stepStart = 0;
+  static bool firstPass = true;
   
-  if (premierPassage) {
-    debutEtape = millis();
-    premierPassage = false;
-    etapeSOS = 0;
-    digitalWrite(LED_COUPURE, LOW);
-    Serial.println("Début pattern SOS");
+  if (firstPass) {
+    stepStart = millis();
+    firstPass = false;
+    sosStep = 0;
+    digitalWrite(STATUS_LED, LOW);
+    Serial.println("Starting SOS pattern");
   }
   
-  unsigned long tempsEtape = millis() - debutEtape;
+  unsigned long stepTime = millis() - stepStart;
   
-  switch (etapeSOS) {
-    // Points (. . .)
-    case 0: case 2: case 4: // Points ON
-      if (tempsEtape >= 200) {
-        digitalWrite(LED_COUPURE, LOW);
-        debutEtape = millis();
-        etapeSOS++;
+  switch (sosStep) {
+    // Dots (. . .)
+    case 0: case 2: case 4: // Dots ON
+      if (stepTime >= 200) {
+        digitalWrite(STATUS_LED, LOW);
+        stepStart = millis();
+        sosStep++;
       } else {
-        digitalWrite(LED_COUPURE, HIGH);
+        digitalWrite(STATUS_LED, HIGH);
       }
       break;
       
-    case 1: case 3: // Espaces entre points
-      if (tempsEtape >= 200) {
-        debutEtape = millis();
-        etapeSOS++;
+    case 1: case 3: // Spaces between dots
+      if (stepTime >= 200) {
+        stepStart = millis();
+        sosStep++;
       }
       break;
       
-    case 5: // Pause avant traits
-      if (tempsEtape >= 400) {
-        debutEtape = millis();
-        etapeSOS++;
+    case 5: // Pause before dashes
+      if (stepTime >= 400) {
+        stepStart = millis();
+        sosStep++;
       }
       break;
       
-    // Traits (- - -)
-    case 6: case 8: case 10: // Traits ON
-      if (tempsEtape >= 600) {
-        digitalWrite(LED_COUPURE, LOW);
-        debutEtape = millis();
-        etapeSOS++;
+    // Dashes (- - -)
+    case 6: case 8: case 10: // Dashes ON
+      if (stepTime >= 600) {
+        digitalWrite(STATUS_LED, LOW);
+        stepStart = millis();
+        sosStep++;
       } else {
-        digitalWrite(LED_COUPURE, HIGH);
+        digitalWrite(STATUS_LED, HIGH);
       }
       break;
       
-    case 7: case 9: // Espaces entre traits
-      if (tempsEtape >= 200) {
-        debutEtape = millis();
-        etapeSOS++;
+    case 7: case 9: // Spaces between dashes
+      if (stepTime >= 200) {
+        stepStart = millis();
+        sosStep++;
       }
       break;
       
-    case 11: // Pause avant points finaux
-      if (tempsEtape >= 400) {
-        debutEtape = millis();
-        etapeSOS++;
+    case 11: // Pause before final dots
+      if (stepTime >= 400) {
+        stepStart = millis();
+        sosStep++;
       }
       break;
       
-    // Points finaux (. . .)
-    case 12: case 14: case 16: // Points ON
-      if (tempsEtape >= 200) {
-        digitalWrite(LED_COUPURE, LOW);
-        debutEtape = millis();
-        etapeSOS++;
+    // Final dots (. . .)
+    case 12: case 14: case 16: // Dots ON
+      if (stepTime >= 200) {
+        digitalWrite(STATUS_LED, LOW);
+        stepStart = millis();
+        sosStep++;
       } else {
-        digitalWrite(LED_COUPURE, HIGH);
+        digitalWrite(STATUS_LED, HIGH);
       }
       break;
       
-    case 13: case 15: // Espaces entre points
-      if (tempsEtape >= 200) {
-        debutEtape = millis();
-        etapeSOS++;
+    case 13: case 15: // Spaces between dots
+      if (stepTime >= 200) {
+        stepStart = millis();
+        sosStep++;
       }
       break;
       
-    case 17: // Pause longue avant répétition
-      if (tempsEtape >= 1000) {
-        etapeSOS = 0;
-        debutEtape = millis();
-        Serial.println("SOS répété");
+    case 17: // Long pause before repeat
+      if (stepTime >= 1000) {
+        sosStep = 0;
+        stepStart = millis();
+        Serial.println("SOS repeated");
       }
       break;
   }
 }
 
 /*
- * Fonction: Affichage des résultats finaux
+ * Function: Display final results
  */
-void afficherResultatsFinaux() {
+void displayFinalResults() {
   Serial.println("");
   Serial.println("============================================");
-  Serial.println("✅ TEST LED TERMINÉ AVEC SUCCÈS");
+  Serial.println("✅ LED TEST COMPLETED SUCCESSFULLY");
   Serial.println("============================================");
   Serial.println("");
   
-  Serial.println("📊 Résultats du test:");
+  Serial.println("📊 Test results:");
   Serial.println("");
   
-  Serial.println("🧪 FONCTIONS TESTÉES:");
-  Serial.println("✅ LED ON/OFF basique");
-  Serial.println("✅ Clignotement lent (1000ms)");
-  Serial.println("✅ Clignotement normal (500ms)");
-  Serial.println("✅ Clignotement rapide (200ms)");
-  Serial.println("✅ Pattern complexe (SOS)");
-  Serial.println("✅ Contrôle timing précis");
+  Serial.println("🧪 TESTED FUNCTIONS:");
+  Serial.println("✅ Basic LED ON/OFF");
+  Serial.println("✅ Slow blinking (1000ms)");
+  Serial.println("✅ Normal blinking (500ms)");
+  Serial.println("✅ Fast blinking (200ms)");
+  Serial.println("✅ Complex pattern (SOS)");
+  Serial.println("✅ Precise timing control");
   
   Serial.println("");
-  Serial.println("🎯 VALIDATION VISUELLE:");
-  Serial.println("- LED doit être visible et claire");
-  Serial.println("- Pas de scintillement parasite");
-  Serial.println("- Différents rythmes distinguables");
-  Serial.println("- Pattern SOS reconnaissable");
+  Serial.println("🎯 VISUAL VALIDATION:");
+  Serial.println("- LED should be visible and clear");
+  Serial.println("- No parasitic flickering");
+  Serial.println("- Different rhythms distinguishable");
+  Serial.println("- SOS pattern recognizable");
   
   Serial.println("");
-  Serial.println("⚡ CONTRÔLES ÉLECTRIQUES:");
-  Serial.println("- Résistance 220Ω obligatoire");
-  Serial.println("- Courant LED ≈ 15-20mA");
-  Serial.println("- Tension LED ≈ 2-3V");
-  Serial.println("- Pas d'échauffement excessif");
+  Serial.println("⚡ ELECTRICAL CHECKS:");
+  Serial.println("- 220Ω resistor mandatory");
+  Serial.println("- LED current ≈ 15-20mA");
+  Serial.println("- LED voltage ≈ 2-3V");
+  Serial.println("- No excessive heating");
   
   Serial.println("");
-  Serial.println("✅ LED DE STATUT FONCTIONNELLE");
-  Serial.println("➡️  Prêt pour le test suivant: Contrôle moteur");
+  Serial.println("✅ STATUS LED FUNCTIONAL");
+  Serial.println("➡️  Ready for next test: Motor control");
   Serial.println("");
-  Serial.println("🔄 Test final: Clignotement continu 500ms...");
+  Serial.println("🔄 Final test: Continuous 500ms blinking...");
 }
 
 /*
  * ============================================================================
- * DIAGNOSTIC ET DÉPANNAGE
+ * DIAGNOSTICS AND TROUBLESHOOTING
  * ============================================================================
  * 
- * ❌ LED ne s'allume jamais:
- *    - Vérifier polarité: Anode (+) vers résistance, Cathode (-) vers GND
- *    - Vérifier résistance 220Ω présente et connectée
- *    - LED défaillante (tester avec pile 3V + résistance)
- *    - Pin D3 défaillante (tester avec autre pin)
+ * ❌ LED never lights up:
+ *    - Check polarity: Anode (+) to resistor, Cathode (-) to GND
+ *    - Check 220Ω resistor present and connected
+ *    - Defective LED (test with 3V battery + resistor)
+ *    - Defective pin D3 (test with another pin)
  * 
- * ❌ LED toujours allumée:
- *    - Court-circuit bypassing Arduino
- *    - Pin D3 en court-circuit vers +5V
- *    - Problème dans le code (pinMode incorrect)
+ * ❌ LED always on:
+ *    - Short circuit bypassing Arduino
+ *    - Pin D3 short-circuited to +5V
+ *    - Code problem (incorrect pinMode)
  * 
- * ❌ LED très faible/pas visible:
- *    - Résistance trop forte (utiliser 220Ω, pas 10kΩ)
- *    - LED défaillante partiellement
- *    - Tension d'alimentation insuffisante
- *    - LED surdimensionnée (utiliser LED 5mm standard)
+ * ❌ LED very dim/not visible:
+ *    - Resistor too high (use 220Ω, not 10kΩ)
+ *    - Partially defective LED
+ *    - Insufficient supply voltage
+ *    - Oversized LED (use standard 5mm LED)
  * 
- * ❌ LED trop brillante/chauffe:
- *    - Résistance trop faible ou absente (DANGER!)
- *    - Utiliser exactement 220Ω pour 5V
- *    - LED mal dimensionnée
- *    - Court-circuit partiel
+ * ❌ LED too bright/heats up:
+ *    - Resistor too low or missing (DANGER!)
+ *    - Use exactly 220Ω for 5V
+ *    - Poorly sized LED
+ *    - Partial short circuit
  * 
- * ❌ Clignotement irrégulier:
- *    - Alimentation instable
- *    - Interférences électromagnétiques
- *    - Problème timing Arduino (rare)
- *    - Condensateur de filtrage manquant
+ * ❌ Irregular blinking:
+ *    - Unstable power supply
+ *    - Electromagnetic interference
+ *    - Arduino timing problem (rare)
+ *    - Missing filter capacitor
  * 
- * ❌ LED grille rapidement:
- *    - Courant excessif (vérifier résistance)
- *    - Tension trop élevée
- *    - LED de mauvaise qualité
- *    - Inversions de polarité répétées
+ * ❌ LED burns out quickly:
+ *    - Excessive current (check resistor)
+ *    - Voltage too high
+ *    - Poor quality LED
+ *    - Repeated polarity inversions
  * 
- * 🔧 Tests avec multimètre:
- *    - Tension sur anode LED: 2-3V (LED allumée)
- *    - Courant dans circuit: 15-20mA (LED allumée)
- *    - Tension pin D3: 5V (HIGH), 0V (LOW)
- *    - Résistance: exactement 220Ω ±5%
+ * 🔧 Multimeter tests:
+ *    - Voltage on LED anode: 2-3V (LED on)
+ *    - Current in circuit: 15-20mA (LED on)
+ *    - Pin D3 voltage: 5V (HIGH), 0V (LOW)
+ *    - Resistance: exactly 220Ω ±5%
  * 
- * 💡 Calcul résistance LED:
+ * 💡 LED resistor calculation:
  *    R = (Vsource - Vled) / Iled
  *    R = (5V - 2V) / 0.015A = 200Ω
- *    → 220Ω (valeur normalisée proche)
+ *    → 220Ω (closest standard value)
  * 
  * ============================================================================
  */

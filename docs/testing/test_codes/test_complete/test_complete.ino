@@ -1,39 +1,39 @@
 /*
  * ============================================================================
- * TEST COMPLET SYSTÈME - Poulailler Automatique
+ * COMPLETE SYSTEM TEST - Automatic Chicken Coop
  * ============================================================================
  * 
  * Test: 7.1 - Complete System Integration
- * Objectif: Valider l'intégration complète de tous les composants
- * Durée: ~15 minutes
+ * Objective: Validate complete integration of all components
+ * Duration: ~15 minutes
  * 
- * Ce test vérifie:
- * - Fonctionnement simultané de tous les modules
- * - Interface utilisateur complète (LCD + bouton)
- * - Logique de contrôle automatique
- * - Gestion des capteurs et actionneurs
- * - Sauvegarde EEPROM des paramètres
- * - Scénarios d'utilisation réalistes
+ * This test verifies:
+ * - Simultaneous operation of all modules
+ * - Complete user interface (LCD + button)
+ * - Automatic control logic
+ * - Sensor and actuator management
+ * - EEPROM parameter backup
+ * - Realistic usage scenarios
  * 
- * Composants requis (TOUS connectés):
- * - Arduino Nano + alimentation
+ * Required components (ALL connected):
+ * - Arduino Nano + power supply
  * - RTC DS3231 (I2C)
- * - LCD 16x2 I2C  
- * - Capteur luminosité + résistance 10kΩ
- * - 2x capteurs fin de course
- * - Bouton multifonction
- * - LED de statut
- * - Module L298N + moteur (⚠️ DÉCONNECTÉ du mécanisme)
+ * - 16x2 LCD I2C  
+ * - Light sensor + 10kΩ resistor
+ * - 2x limit switch sensors
+ * - Multi-function button
+ * - Status LED
+ * - L298N module + motor (⚠️ DISCONNECTED from mechanism)
  * 
- * Procédure:
- * 1. Uploader ce code (version simplifiée du projet final)
- * 2. Vérifier affichage LCD et navigation bouton
- * 3. Tester tous les capteurs simultanément  
- * 4. Valider logique automatique (simulation)
- * 5. Contrôler sauvegarde paramètres
+ * Procedure:
+ * 1. Upload this code (simplified version of final project)
+ * 2. Verify LCD display and button navigation
+ * 3. Test all sensors simultaneously  
+ * 4. Validate automatic logic (simulation)
+ * 5. Check parameter backup
  * 
- * ⚠️ SÉCURITÉ: Moteur déconnecté du mécanisme pour éviter 
- * mouvements intempestifs pendant les tests
+ * ⚠️ SAFETY: Motor disconnected from mechanism to avoid 
+ * unwanted movements during tests
  * 
  * ============================================================================
  */
@@ -43,81 +43,81 @@
 #include <LiquidCrystal_I2C.h>
 #include <EEPROM.h>
 
-// Configuration des broches (identique au projet final)
-const int MOTEUR_PIN1 = 7;
-const int MOTEUR_PIN2 = 6;
-const int CAPTEUR_LUMIERE = A0;
-const int BOUTON_PIN = 5;
-const int FIN_COURSE_HAUT = 8;
-const int FIN_COURSE_BAS = 9;
-const int LED_COUPURE = 3;
+// Pin configuration (identical to final project)
+const int MOTOR_PIN1 = 7;
+const int MOTOR_PIN2 = 6;
+const int LIGHT_SENSOR = A0;
+const int BUTTON_PIN = 5;
+const int TOP_LIMIT_SWITCH = 8;
+const int BOTTOM_LIMIT_SWITCH = 9;
+const int STATUS_LED = 3;
 
-// Constantes
-const unsigned long APPUI_LONG = 3000;
-const unsigned long TIMEOUT_REGLAGE = 10000;
-const unsigned long DOUBLE_CLIC = 500;
-const int SEUIL_EEPROM_ADDR = 0;
+// Constants
+const unsigned long LONG_PRESS = 3000;
+const unsigned long SETTINGS_TIMEOUT = 10000;
+const unsigned long DOUBLE_CLICK = 500;
+const int THRESHOLD_EEPROM_ADDR = 0;
 
-// Variables globales
+// Global variables
 RTC_DS3231 rtc;
 LiquidCrystal_I2C lcd(0x27, 16, 2);
-bool systemeInitialise = false;
-int seuilLumiere = 300;
+bool systemInitialized = false;
+int lightThreshold = 300;
 
-// Variables bouton
-unsigned long debutAppui = 0;
-bool boutonEnfonce = false;
-bool appuiTraite = false;
-unsigned long dernierRelachement = 0;
-bool enAttenteDoubleClick = false;
+// Button variables
+unsigned long pressStart = 0;
+bool buttonPressed = false;
+bool pressProcessed = false;
+unsigned long lastRelease = 0;
+bool waitingDoubleClick = false;
 
-// Variables interface LCD
-enum ModeReglage {
+// LCD interface variables
+enum SettingsMode {
   MODE_NORMAL,
-  MODE_REGLAGE_HEURE,
-  MODE_REGLAGE_MINUTE,
-  MODE_REGLAGE_SEUIL,
-  MODE_TEST_SYSTEME
+  MODE_SET_HOUR,
+  MODE_SET_MINUTE,
+  MODE_SET_THRESHOLD,
+  MODE_SYSTEM_TEST
 };
-ModeReglage modeActuel = MODE_NORMAL;
-unsigned long debutModeReglage = 0;
-bool clignotement = false;
-unsigned long dernierClignotement = 0;
+SettingsMode currentMode = MODE_NORMAL;
+unsigned long settingsModeStart = 0;
+bool blinking = false;
+unsigned long lastBlink = 0;
 
-// Variables de test intégration
-unsigned long debutTestComplet = 0;
-int phaseTestComplete = 0;
-bool testEnCours = false;
+// Complete test variables
+unsigned long completeTestStart = 0;
+int completeTestPhase = 0;
+bool testInProgress = false;
 
-// Statistiques de test
-int testsReussis = 0;
-int testsEchoues = 0;
-String dernierProbleme = "";
+// Test statistics
+int testsSucceeded = 0;
+int testsFailed = 0;
+String lastProblem = "";
 
 void setup() {
   Serial.begin(9600);
   delay(1000);
   
   Serial.println("============================================");
-  Serial.println("TEST COMPLET SYSTÈME - Poulailler Auto");
+  Serial.println("COMPLETE SYSTEM TEST - Chicken Coop Auto");
   Serial.println("============================================");
   Serial.println("Version: 1.0");
   Serial.println("Test: 7.1 - Complete System Integration");
   Serial.println("");
   
-  // Initialisation des broches
-  pinMode(MOTEUR_PIN1, OUTPUT);
-  pinMode(MOTEUR_PIN2, OUTPUT);
-  pinMode(BOUTON_PIN, INPUT_PULLUP);
-  pinMode(FIN_COURSE_HAUT, INPUT_PULLUP);
-  pinMode(FIN_COURSE_BAS, INPUT_PULLUP);
-  pinMode(LED_COUPURE, OUTPUT);
+  // Pin initialization
+  pinMode(MOTOR_PIN1, OUTPUT);
+  pinMode(MOTOR_PIN2, OUTPUT);
+  pinMode(BUTTON_PIN, INPUT_PULLUP);
+  pinMode(TOP_LIMIT_SWITCH, INPUT_PULLUP);
+  pinMode(BOTTOM_LIMIT_SWITCH, INPUT_PULLUP);
+  pinMode(STATUS_LED, OUTPUT);
   
-  // Arrêt moteur (sécurité)
-  digitalWrite(MOTEUR_PIN1, LOW);
-  digitalWrite(MOTEUR_PIN2, LOW);
+  // Stop motor (safety)
+  digitalWrite(MOTOR_PIN1, LOW);
+  digitalWrite(MOTOR_PIN2, LOW);
   
-  Serial.println("🔧 INITIALISATION DES MODULES:");
+  Serial.println("🔧 MODULE INITIALIZATION:");
   Serial.println("");
   
   // Test LCD
@@ -125,583 +125,583 @@ void setup() {
   lcd.init();
   lcd.backlight();
   lcd.setCursor(0, 0);
-  lcd.print("Test Complet");
+  lcd.print("Complete Test");
   lcd.setCursor(0, 1);
-  lcd.print("Initialisation..");
+  lcd.print("Initializing...");
   delay(1000);
   Serial.println("✅ OK");
   
   // Test RTC
   Serial.print("2. RTC DS3231... ");
   if (!rtc.begin()) {
-    Serial.println("❌ ÉCHEC");
-    testsEchoues++;
-    dernierProbleme = "RTC non détecté";
+    Serial.println("❌ FAILED");
+    testsFailed++;
+    lastProblem = "RTC not detected";
   } else {
     Serial.println("✅ OK");
-    testsReussis++;
+    testsSucceeded++;
   }
   
-  // Test capteurs
-  Serial.print("3. Capteur luminosité... ");
-  int lumiere = analogRead(CAPTEUR_LUMIERE);
-  if (lumiere > 0 && lumiere < 1023) {
-    Serial.print("✅ OK (valeur: ");
-    Serial.print(lumiere);
+  // Test sensors
+  Serial.print("3. Light sensor... ");
+  int light = analogRead(LIGHT_SENSOR);
+  if (light > 0 && light < 1023) {
+    Serial.print("✅ OK (value: ");
+    Serial.print(light);
     Serial.println(")");
-    testsReussis++;
+    testsSucceeded++;
   } else {
-    Serial.println("⚠️ Valeurs limites");
+    Serial.println("⚠️ Edge values");
   }
   
-  Serial.print("4. Capteurs fin de course... ");
-  bool haut = digitalRead(FIN_COURSE_HAUT);
-  bool bas = digitalRead(FIN_COURSE_BAS);
-  Serial.print("✅ OK (H:");
-  Serial.print(haut ? "Libre" : "Actionné");
+  Serial.print("4. Limit switches... ");
+  bool top = digitalRead(TOP_LIMIT_SWITCH);
+  bool bottom = digitalRead(BOTTOM_LIMIT_SWITCH);
+  Serial.print("✅ OK (T:");
+  Serial.print(top ? "Free" : "Pressed");
   Serial.print(", B:");
-  Serial.print(bas ? "Libre" : "Actionné");
+  Serial.print(bottom ? "Free" : "Pressed");
   Serial.println(")");
-  testsReussis++;
+  testsSucceeded++;
   
-  Serial.print("5. Bouton... ");
-  bool bouton = digitalRead(BOUTON_PIN);
-  if (bouton == HIGH) {
-    Serial.println("✅ OK (pull-up actif)");
-    testsReussis++;
+  Serial.print("5. Button... ");
+  bool button = digitalRead(BUTTON_PIN);
+  if (button == HIGH) {
+    Serial.println("✅ OK (pull-up active)");
+    testsSucceeded++;
   } else {
-    Serial.println("⚠️ État pressé au démarrage");
+    Serial.println("⚠️ Pressed state at startup");
   }
   
-  Serial.print("6. LED de statut... ");
-  digitalWrite(LED_COUPURE, HIGH);
+  Serial.print("6. Status LED... ");
+  digitalWrite(STATUS_LED, HIGH);
   delay(200);
-  digitalWrite(LED_COUPURE, LOW);
+  digitalWrite(STATUS_LED, LOW);
   Serial.println("✅ OK");
-  testsReussis++;
+  testsSucceeded++;
   
   Serial.print("7. EEPROM... ");
-  int valeurTest = EEPROM.read(SEUIL_EEPROM_ADDR);
-  if (valeurTest >= 0 && valeurTest <= 255) {
-    seuilLumiere = valeurTest | (EEPROM.read(SEUIL_EEPROM_ADDR + 1) << 8);
-    if (seuilLumiere == 0) seuilLumiere = 300; // Valeur par défaut
+  int testValue = EEPROM.read(THRESHOLD_EEPROM_ADDR);
+  if (testValue >= 0 && testValue <= 255) {
+    lightThreshold = testValue | (EEPROM.read(THRESHOLD_EEPROM_ADDR + 1) << 8);
+    if (lightThreshold == 0) lightThreshold = 300; // Default value
     Serial.println("✅ OK");
-    testsReussis++;
+    testsSucceeded++;
   } else {
-    Serial.println("⚠️ Initialisation");
+    Serial.println("⚠️ Initialization");
   }
   
   Serial.println("");
-  Serial.print("📊 Initialisation: ");
-  Serial.print(testsReussis);
+  Serial.print("📊 Initialization: ");
+  Serial.print(testsSucceeded);
   Serial.print(" OK, ");
-  Serial.print(testsEchoues);
-  Serial.println(" échecs");
+  Serial.print(testsFailed);
+  Serial.println(" failures");
   
-  if (testsEchoues == 0) {
-    Serial.println("✅ SYSTÈME INTÉGRALEMENT FONCTIONNEL");
-    systemeInitialise = true;
+  if (testsFailed == 0) {
+    Serial.println("✅ SYSTEM FULLY FUNCTIONAL");
+    systemInitialized = true;
   } else {
-    Serial.print("⚠️ Problèmes détectés: ");
-    Serial.println(dernierProbleme);
+    Serial.print("⚠️ Problems detected: ");
+    Serial.println(lastProblem);
   }
   
   Serial.println("");
-  Serial.println("📋 TESTS D'INTÉGRATION DISPONIBLES:");
-  Serial.println("- Navigation normale: Bouton court = actions");
-  Serial.println("- Mode réglage: Bouton long = réglages");
-  Serial.println("- Test automatique: Mode spécial via menu");
+  Serial.println("📋 AVAILABLE INTEGRATION TESTS:");
+  Serial.println("- Normal navigation: Short button = actions");
+  Serial.println("- Settings mode: Long button = settings");
+  Serial.println("- Automatic test: Special mode via menu");
   Serial.println("");
-  Serial.println("🎮 COMMANDES:");
-  Serial.println("- Appui court: Actions/navigation");
-  Serial.println("- Appui long: Mode réglage");
-  Serial.println("- Double-clic: Actions spéciales");
+  Serial.println("🎮 COMMANDS:");
+  Serial.println("- Short press: Actions/navigation");
+  Serial.println("- Long press: Settings mode");
+  Serial.println("- Double-click: Special actions");
   Serial.println("");
   
   lcd.clear();
   lcd.setCursor(0, 0);
-  if (systemeInitialise) {
-    lcd.print("Systeme OK!");
+  if (systemInitialized) {
+    lcd.print("System OK!");
   } else {
-    lcd.print("Problemes detect");
+    lcd.print("Problems detected");
   }
   
   delay(2000);
-  debutTestComplet = millis();
+  completeTestStart = millis();
 }
 
 void loop() {
-  // Gestion du clignotement pour mode réglage
-  if (millis() - dernierClignotement > 500) {
-    dernierClignotement = millis();
-    clignotement = !clignotement;
+  // Blinking management for settings mode
+  if (millis() - lastBlink > 500) {
+    lastBlink = millis();
+    blinking = !blinking;
   }
   
-  // Gestion du bouton
-  gererBouton();
+  // Button management
+  handleButton();
   
-  // Gestion du timeout mode réglage
-  if (modeActuel != MODE_NORMAL && millis() - debutModeReglage > TIMEOUT_REGLAGE) {
-    modeActuel = MODE_NORMAL;
+  // Settings mode timeout management
+  if (currentMode != MODE_NORMAL && millis() - settingsModeStart > SETTINGS_TIMEOUT) {
+    currentMode = MODE_NORMAL;
   }
   
-  // Gestion de l'affichage selon le mode
-  gererAffichage();
+  // Display management according to mode
+  handleDisplay();
   
-  // Test automatique si mode activé
-  if (modeActuel == MODE_TEST_SYSTEME) {
-    executerTestAutomatique();
+  // Automatic test if mode activated
+  if (currentMode == MODE_SYSTEM_TEST) {
+    executeAutomaticTest();
   }
   
   delay(50);
 }
 
 /*
- * Gestion du bouton multifonction
+ * Multi-function button management
  */
-void gererBouton() {
-  bool etatBouton = digitalRead(BOUTON_PIN);
+void handleButton() {
+  bool buttonState = digitalRead(BUTTON_PIN);
   
-  // Détection début d'appui
-  if (!boutonEnfonce && etatBouton == LOW) {
-    delay(20); // Anti-rebond
-    if (digitalRead(BOUTON_PIN) == LOW) {
-      boutonEnfonce = true;
-      debutAppui = millis();
-      appuiTraite = false;
+  // Press start detection
+  if (!buttonPressed && buttonState == LOW) {
+    delay(20); // Debounce
+    if (digitalRead(BUTTON_PIN) == LOW) {
+      buttonPressed = true;
+      pressStart = millis();
+      pressProcessed = false;
     }
   }
   
-  // Détection relâchement
-  if (boutonEnfonce && etatBouton == HIGH) {
-    delay(20); // Anti-rebond
-    if (digitalRead(BOUTON_PIN) == HIGH) {
-      boutonEnfonce = false;
-      unsigned long dureeAppui = millis() - debutAppui;
+  // Release detection
+  if (buttonPressed && buttonState == HIGH) {
+    delay(20); // Debounce
+    if (digitalRead(BUTTON_PIN) == HIGH) {
+      buttonPressed = false;
+      unsigned long pressDuration = millis() - pressStart;
       
-      if (!appuiTraite) {
-        if (dureeAppui >= APPUI_LONG) {
-          gererAppuiLong();
+      if (!pressProcessed) {
+        if (pressDuration >= LONG_PRESS) {
+          handleLongPress();
         } else {
-          if (enAttenteDoubleClick && millis() - dernierRelachement < DOUBLE_CLIC) {
-            gererDoubleClick();
-            enAttenteDoubleClick = false;
+          if (waitingDoubleClick && millis() - lastRelease < DOUBLE_CLICK) {
+            handleDoubleClick();
+            waitingDoubleClick = false;
           } else {
-            dernierRelachement = millis();
-            enAttenteDoubleClick = true;
+            lastRelease = millis();
+            waitingDoubleClick = true;
           }
         }
       }
     }
   }
   
-  // Timeout double-clic
-  if (enAttenteDoubleClick && millis() - dernierRelachement > DOUBLE_CLIC) {
-    gererAppuiBref();
-    enAttenteDoubleClick = false;
+  // Double-click timeout
+  if (waitingDoubleClick && millis() - lastRelease > DOUBLE_CLICK) {
+    handleShortPress();
+    waitingDoubleClick = false;
   }
 }
 
 /*
- * Gestion appui bref
+ * Short press management
  */
-void gererAppuiBref() {
-  Serial.print("🔘 Appui bref - Mode: ");
-  Serial.println(modeActuel);
+void handleShortPress() {
+  Serial.print("🔘 Short press - Mode: ");
+  Serial.println(currentMode);
   
-  switch (modeActuel) {
+  switch (currentMode) {
     case MODE_NORMAL:
-      // Test simple des sorties
-      Serial.println("   → Test LED + moteur");
-      digitalWrite(LED_COUPURE, HIGH);
+      // Simple output test
+      Serial.println("   → LED + motor test");
+      digitalWrite(STATUS_LED, HIGH);
       delay(100);
-      digitalWrite(LED_COUPURE, LOW);
+      digitalWrite(STATUS_LED, LOW);
       
-      // Test moteur très court (sécurité)
-      digitalWrite(MOTEUR_PIN1, HIGH);
-      digitalWrite(MOTEUR_PIN2, LOW);
+      // Very short motor test (safety)
+      digitalWrite(MOTOR_PIN1, HIGH);
+      digitalWrite(MOTOR_PIN2, LOW);
       delay(200);
-      digitalWrite(MOTEUR_PIN1, LOW);
-      digitalWrite(MOTEUR_PIN2, LOW);
+      digitalWrite(MOTOR_PIN1, LOW);
+      digitalWrite(MOTOR_PIN2, LOW);
       break;
       
-    case MODE_REGLAGE_HEURE:
-      // Incrémenter heure
-      if (systemeInitialise) {
-        DateTime maintenant = rtc.now();
-        int nouvelleHeure = (maintenant.hour() + 1) % 24;
-        rtc.adjust(DateTime(maintenant.year(), maintenant.month(), maintenant.day(), 
-                           nouvelleHeure, maintenant.minute(), 0));
-        Serial.print("   → Heure: ");
-        Serial.println(nouvelleHeure);
+    case MODE_SET_HOUR:
+      // Increment hour
+      if (systemInitialized) {
+        DateTime now = rtc.now();
+        int newHour = (now.hour() + 1) % 24;
+        rtc.adjust(DateTime(now.year(), now.month(), now.day(), 
+                           newHour, now.minute(), 0));
+        Serial.print("   → Hour: ");
+        Serial.println(newHour);
       }
-      debutModeReglage = millis();
+      settingsModeStart = millis();
       break;
       
-    case MODE_REGLAGE_MINUTE:
-      // Incrémenter minute
-      if (systemeInitialise) {
-        DateTime maintenant = rtc.now();
-        int nouvelleMinute = (maintenant.minute() + 1) % 60;
-        rtc.adjust(DateTime(maintenant.year(), maintenant.month(), maintenant.day(), 
-                           maintenant.hour(), nouvelleMinute, 0));
+    case MODE_SET_MINUTE:
+      // Increment minute
+      if (systemInitialized) {
+        DateTime now = rtc.now();
+        int newMinute = (now.minute() + 1) % 60;
+        rtc.adjust(DateTime(now.year(), now.month(), now.day(), 
+                           now.hour(), newMinute, 0));
         Serial.print("   → Minute: ");
-        Serial.println(nouvelleMinute);
+        Serial.println(newMinute);
       }
-      debutModeReglage = millis();
+      settingsModeStart = millis();
       break;
       
-    case MODE_REGLAGE_SEUIL:
-      // Augmenter seuil
-      seuilLumiere = min(1023, seuilLumiere + 10);
-      sauvegarderSeuil();
-      Serial.print("   → Seuil: ");
-      Serial.println(seuilLumiere);
-      debutModeReglage = millis();
+    case MODE_SET_THRESHOLD:
+      // Increase threshold
+      lightThreshold = min(1023, lightThreshold + 10);
+      saveThreshold();
+      Serial.print("   → Threshold: ");
+      Serial.println(lightThreshold);
+      settingsModeStart = millis();
       break;
       
-    case MODE_TEST_SYSTEME:
-      // Passer à la phase suivante
-      phaseTestComplete++;
-      Serial.print("   → Phase test: ");
-      Serial.println(phaseTestComplete);
+    case MODE_SYSTEM_TEST:
+      // Move to next phase
+      completeTestPhase++;
+      Serial.print("   → Test phase: ");
+      Serial.println(completeTestPhase);
       break;
   }
 }
 
 /*
- * Gestion double-clic
+ * Double-click management
  */
-void gererDoubleClick() {
-  Serial.println("🔄 Double-clic");
+void handleDoubleClick() {
+  Serial.println("🔄 Double-click");
   
-  if (modeActuel == MODE_REGLAGE_SEUIL) {
-    seuilLumiere = max(0, seuilLumiere - 10);
-    sauvegarderSeuil();
-    Serial.print("   → Seuil diminué: ");
-    Serial.println(seuilLumiere);
-    debutModeReglage = millis();
+  if (currentMode == MODE_SET_THRESHOLD) {
+    lightThreshold = max(0, lightThreshold - 10);
+    saveThreshold();
+    Serial.print("   → Threshold decreased: ");
+    Serial.println(lightThreshold);
+    settingsModeStart = millis();
   }
 }
 
 /*
- * Gestion appui long
+ * Long press management
  */
-void gererAppuiLong() {
-  Serial.print("⏱️ Appui long - Transition: ");
-  Serial.print(modeActuel);
+void handleLongPress() {
+  Serial.print("⏱️ Long press - Transition: ");
+  Serial.print(currentMode);
   
-  switch (modeActuel) {
+  switch (currentMode) {
     case MODE_NORMAL:
-      modeActuel = MODE_REGLAGE_HEURE;
-      Serial.println(" → REGLAGE_HEURE");
+      currentMode = MODE_SET_HOUR;
+      Serial.println(" → SET_HOUR");
       break;
-    case MODE_REGLAGE_HEURE:
-      modeActuel = MODE_REGLAGE_MINUTE;
-      Serial.println(" → REGLAGE_MINUTE");
+    case MODE_SET_HOUR:
+      currentMode = MODE_SET_MINUTE;
+      Serial.println(" → SET_MINUTE");
       break;
-    case MODE_REGLAGE_MINUTE:
-      modeActuel = MODE_REGLAGE_SEUIL;
-      Serial.println(" → REGLAGE_SEUIL");
+    case MODE_SET_MINUTE:
+      currentMode = MODE_SET_THRESHOLD;
+      Serial.println(" → SET_THRESHOLD");
       break;
-    case MODE_REGLAGE_SEUIL:
-      modeActuel = MODE_TEST_SYSTEME;
-      testEnCours = true;
-      phaseTestComplete = 0;
-      Serial.println(" → TEST_SYSTEME");
+    case MODE_SET_THRESHOLD:
+      currentMode = MODE_SYSTEM_TEST;
+      testInProgress = true;
+      completeTestPhase = 0;
+      Serial.println(" → SYSTEM_TEST");
       break;
-    case MODE_TEST_SYSTEME:
-      modeActuel = MODE_NORMAL;
-      testEnCours = false;
+    case MODE_SYSTEM_TEST:
+      currentMode = MODE_NORMAL;
+      testInProgress = false;
       Serial.println(" → NORMAL");
       break;
   }
   
-  debutModeReglage = millis();
-  appuiTraite = true;
+  settingsModeStart = millis();
+  pressProcessed = true;
 }
 
 /*
- * Gestion de l'affichage LCD
+ * LCD display management
  */
-void gererAffichage() {
+void handleDisplay() {
   lcd.setCursor(0, 0);
   
-  switch (modeActuel) {
+  switch (currentMode) {
     case MODE_NORMAL:
-      // Ligne 1: Heure ou statut
-      if (systemeInitialise) {
-        DateTime maintenant = rtc.now();
-        if (maintenant.hour() < 10) lcd.print("0");
-        lcd.print(maintenant.hour());
+      // Line 1: Time or status
+      if (systemInitialized) {
+        DateTime now = rtc.now();
+        if (now.hour() < 10) lcd.print("0");
+        lcd.print(now.hour());
         lcd.print(":");
-        if (maintenant.minute() < 10) lcd.print("0");
-        lcd.print(maintenant.minute());
+        if (now.minute() < 10) lcd.print("0");
+        lcd.print(now.minute());
         lcd.print("      ");
       } else {
-        lcd.print("Systeme KO      ");
+        lcd.print("System KO      ");
       }
       
-      // Ligne 2: Capteurs
+      // Line 2: Sensors
       lcd.setCursor(0, 1);
-      int lumiere = analogRead(CAPTEUR_LUMIERE);
-      bool haut = digitalRead(FIN_COURSE_HAUT);
-      bool bas = digitalRead(FIN_COURSE_BAS);
+      int light = analogRead(LIGHT_SENSOR);
+      bool top = digitalRead(TOP_LIMIT_SWITCH);
+      bool bottom = digitalRead(BOTTOM_LIMIT_SWITCH);
       
       lcd.print("L:");
-      if (lumiere < 100) lcd.print("  ");
-      else if (lumiere < 1000) lcd.print(" ");
-      lcd.print(lumiere);
-      lcd.print(" H:");
-      lcd.print(haut ? "0" : "1");
+      if (light < 100) lcd.print("  ");
+      else if (light < 1000) lcd.print(" ");
+      lcd.print(light);
+      lcd.print(" T:");
+      lcd.print(top ? "0" : "1");
       lcd.print(" B:");
-      lcd.print(bas ? "0" : "1");
+      lcd.print(bottom ? "0" : "1");
       lcd.print("   ");
       break;
       
-    case MODE_REGLAGE_HEURE:
-      if (systemeInitialise) {
-        DateTime maintenant = rtc.now();
-        if (clignotement) {
+    case MODE_SET_HOUR:
+      if (systemInitialized) {
+        DateTime now = rtc.now();
+        if (blinking) {
           lcd.print("  :");
         } else {
-          if (maintenant.hour() < 10) lcd.print("0");
-          lcd.print(maintenant.hour());
+          if (now.hour() < 10) lcd.print("0");
+          lcd.print(now.hour());
           lcd.print(":");
         }
-        if (maintenant.minute() < 10) lcd.print("0");
-        lcd.print(maintenant.minute());
+        if (now.minute() < 10) lcd.print("0");
+        lcd.print(now.minute());
         lcd.print("      ");
       } else {
-        lcd.print("RTC non dispo   ");
+        lcd.print("RTC not available");
       }
       
       lcd.setCursor(0, 1);
-      lcd.print("Reglage heure   ");
+      lcd.print("Set hour        ");
       break;
       
-    case MODE_REGLAGE_MINUTE:
-      if (systemeInitialise) {
-        DateTime maintenant = rtc.now();
-        if (maintenant.hour() < 10) lcd.print("0");
-        lcd.print(maintenant.hour());
+    case MODE_SET_MINUTE:
+      if (systemInitialized) {
+        DateTime now = rtc.now();
+        if (now.hour() < 10) lcd.print("0");
+        lcd.print(now.hour());
         lcd.print(":");
-        if (clignotement) {
+        if (blinking) {
           lcd.print("  ");
         } else {
-          if (maintenant.minute() < 10) lcd.print("0");
-          lcd.print(maintenant.minute());
+          if (now.minute() < 10) lcd.print("0");
+          lcd.print(now.minute());
         }
         lcd.print("      ");
       } else {
-        lcd.print("RTC non dispo   ");
+        lcd.print("RTC not available");
       }
       
       lcd.setCursor(0, 1);
-      lcd.print("Reglage minute  ");
+      lcd.print("Set minute      ");
       break;
       
-    case MODE_REGLAGE_SEUIL:
-      lcd.print("Seuil: ");
-      lcd.print(seuilLumiere);
+    case MODE_SET_THRESHOLD:
+      lcd.print("Threshold: ");
+      lcd.print(lightThreshold);
       lcd.print("     ");
       
       lcd.setCursor(0, 1);
-      int valeurActuelle = analogRead(CAPTEUR_LUMIERE);
-      lcd.print("Actuel: ");
-      lcd.print(valeurActuelle);
+      int currentValue = analogRead(LIGHT_SENSOR);
+      lcd.print("Current: ");
+      lcd.print(currentValue);
       lcd.print("     ");
       break;
       
-    case MODE_TEST_SYSTEME:
-      lcd.print("Test auto ");
-      lcd.print(phaseTestComplete);
+    case MODE_SYSTEM_TEST:
+      lcd.print("Auto test ");
+      lcd.print(completeTestPhase);
       lcd.print("/5   ");
       
       lcd.setCursor(0, 1);
-      switch (phaseTestComplete) {
-        case 0: lcd.print("Pret a tester   "); break;
-        case 1: lcd.print("Test capteurs   "); break;
-        case 2: lcd.print("Test moteur     "); break;
+      switch (completeTestPhase) {
+        case 0: lcd.print("Ready to test   "); break;
+        case 1: lcd.print("Test sensors    "); break;
+        case 2: lcd.print("Test motor      "); break;
         case 3: lcd.print("Test LED        "); break;
         case 4: lcd.print("Test EEPROM     "); break;
-        case 5: lcd.print("Test termine!   "); break;
-        default: lcd.print("Phase inconnue  "); break;
+        case 5: lcd.print("Test complete!  "); break;
+        default: lcd.print("Unknown phase   "); break;
       }
       break;
   }
 }
 
 /*
- * Test automatique du système
+ * Automatic system test
  */
-void executerTestAutomatique() {
-  static unsigned long dernierTest = 0;
+void executeAutomaticTest() {
+  static unsigned long lastTest = 0;
   
-  if (millis() - dernierTest < 2000) return; // Tests toutes les 2s
-  dernierTest = millis();
+  if (millis() - lastTest < 2000) return; // Tests every 2s
+  lastTest = millis();
   
-  switch (phaseTestComplete) {
-    case 1: // Test capteurs
+  switch (completeTestPhase) {
+    case 1: // Sensor test
       {
-        Serial.println("🧪 Test capteurs automatique");
-        int lumiere = analogRead(CAPTEUR_LUMIERE);
-        bool haut = digitalRead(FIN_COURSE_HAUT);
-        bool bas = digitalRead(FIN_COURSE_BAS);
+        Serial.println("🧪 Automatic sensor test");
+        int light = analogRead(LIGHT_SENSOR);
+        bool top = digitalRead(TOP_LIMIT_SWITCH);
+        bool bottom = digitalRead(BOTTOM_LIMIT_SWITCH);
         
-        Serial.print("   Lumière: ");
-        Serial.print(lumiere);
-        Serial.print(", Haut: ");
-        Serial.print(haut ? "Libre" : "Actionné");
-        Serial.print(", Bas: ");
-        Serial.println(bas ? "Libre" : "Actionné");
+        Serial.print("   Light: ");
+        Serial.print(light);
+        Serial.print(", Top: ");
+        Serial.print(top ? "Free" : "Pressed");
+        Serial.print(", Bottom: ");
+        Serial.println(bottom ? "Free" : "Pressed");
         
-        if (lumiere > 0 && lumiere < 1023) {
-          testsReussis++;
-          Serial.println("   ✅ Capteurs OK");
+        if (light > 0 && light < 1023) {
+          testsSucceeded++;
+          Serial.println("   ✅ Sensors OK");
         } else {
-          testsEchoues++;
-          Serial.println("   ⚠️ Valeurs capteur limites");
+          testsFailed++;
+          Serial.println("   ⚠️ Sensor edge values");
         }
       }
       break;
       
-    case 2: // Test moteur
-      Serial.println("🧪 Test moteur automatique");
-      // Test très court pour sécurité
-      digitalWrite(MOTEUR_PIN1, HIGH);
-      digitalWrite(MOTEUR_PIN2, LOW);
+    case 2: // Motor test
+      Serial.println("🧪 Automatic motor test");
+      // Very short test for safety
+      digitalWrite(MOTOR_PIN1, HIGH);
+      digitalWrite(MOTOR_PIN2, LOW);
       delay(300);
-      digitalWrite(MOTEUR_PIN1, LOW);
-      digitalWrite(MOTEUR_PIN2, HIGH);
+      digitalWrite(MOTOR_PIN1, LOW);
+      digitalWrite(MOTOR_PIN2, HIGH);
       delay(300);
-      digitalWrite(MOTEUR_PIN1, LOW);
-      digitalWrite(MOTEUR_PIN2, LOW);
-      Serial.println("   ✅ Commandes moteur OK");
-      testsReussis++;
+      digitalWrite(MOTOR_PIN1, LOW);
+      digitalWrite(MOTOR_PIN2, LOW);
+      Serial.println("   ✅ Motor commands OK");
+      testsSucceeded++;
       break;
       
-    case 3: // Test LED
-      Serial.println("🧪 Test LED automatique");
+    case 3: // LED test
+      Serial.println("🧪 Automatic LED test");
       for (int i = 0; i < 3; i++) {
-        digitalWrite(LED_COUPURE, HIGH);
+        digitalWrite(STATUS_LED, HIGH);
         delay(200);
-        digitalWrite(LED_COUPURE, LOW);
+        digitalWrite(STATUS_LED, LOW);
         delay(200);
       }
       Serial.println("   ✅ LED OK");
-      testsReussis++;
+      testsSucceeded++;
       break;
       
-    case 4: // Test EEPROM
-      Serial.println("🧪 Test EEPROM automatique");
-      int valeurTest = seuilLumiere + 1;
-      EEPROM.write(100, valeurTest & 0xFF);
+    case 4: // EEPROM test
+      Serial.println("🧪 Automatic EEPROM test");
+      int testValue = lightThreshold + 1;
+      EEPROM.write(100, testValue & 0xFF);
       delay(10);
-      int valeurLue = EEPROM.read(100);
-      if (valeurLue == (valeurTest & 0xFF)) {
+      int readValue = EEPROM.read(100);
+      if (readValue == (testValue & 0xFF)) {
         Serial.println("   ✅ EEPROM OK");
-        testsReussis++;
+        testsSucceeded++;
       } else {
-        Serial.println("   ❌ EEPROM défaillante");
-        testsEchoues++;
+        Serial.println("   ❌ EEPROM defective");
+        testsFailed++;
       }
       break;
       
-    case 5: // Résultats finaux
+    case 5: // Final results
       Serial.println("");
       Serial.println("============================================");
-      Serial.println("🎯 TEST COMPLET TERMINÉ");
+      Serial.println("🎯 COMPLETE TEST FINISHED");
       Serial.println("============================================");
       Serial.println("");
-      Serial.print("📊 Résultats: ");
-      Serial.print(testsReussis);
-      Serial.print(" succès, ");
-      Serial.print(testsEchoues);
-      Serial.println(" échecs");
+      Serial.print("📊 Results: ");
+      Serial.print(testsSucceeded);
+      Serial.print(" successes, ");
+      Serial.print(testsFailed);
+      Serial.println(" failures");
       Serial.println("");
       
-      if (testsEchoues == 0) {
-        Serial.println("✅ SYSTÈME INTÉGRALEMENT VALIDÉ");
-        Serial.println("🎉 Prêt pour déploiement final!");
+      if (testsFailed == 0) {
+        Serial.println("✅ SYSTEM FULLY VALIDATED");
+        Serial.println("🎉 Ready for final deployment!");
       } else {
-        Serial.println("⚠️ Quelques problèmes détectés");
-        Serial.println("📋 Réviser composants défaillants");
+        Serial.println("⚠️ Some problems detected");
+        Serial.println("📋 Review defective components");
       }
       Serial.println("");
-      Serial.println("➡️ Appui long pour revenir au mode normal");
+      Serial.println("➡️ Long press to return to normal mode");
       break;
   }
 }
 
 /*
- * Sauvegarde du seuil en EEPROM
+ * Save threshold to EEPROM
  */
-void sauvegarderSeuil() {
-  EEPROM.write(SEUIL_EEPROM_ADDR, seuilLumiere & 0xFF);
-  EEPROM.write(SEUIL_EEPROM_ADDR + 1, (seuilLumiere >> 8) & 0xFF);
+void saveThreshold() {
+  EEPROM.write(THRESHOLD_EEPROM_ADDR, lightThreshold & 0xFF);
+  EEPROM.write(THRESHOLD_EEPROM_ADDR + 1, (lightThreshold >> 8) & 0xFF);
 }
 
 /*
  * ============================================================================
- * DIAGNOSTIC SYSTÈME COMPLET
+ * COMPLETE SYSTEM DIAGNOSTICS
  * ============================================================================
  * 
- * ❌ "RTC non détecté":
- *    - Vérifier câblage I2C: SDA→A4, SCL→A5
- *    - Vérifier alimentation RTC: VCC→5V, GND→GND
- *    - Conflit adresse I2C avec LCD (rare)
- *    - Module RTC défaillant
+ * ❌ "RTC not detected":
+ *    - Check I2C wiring: SDA→A4, SCL→A5
+ *    - Check RTC power: VCC→5V, GND→GND
+ *    - I2C address conflict with LCD (rare)
+ *    - Defective RTC module
  * 
- * ❌ Interface bouton non réactive:
- *    - Bouton défaillant ou mal câblé
- *    - Pin D5 utilisée par autre composant
- *    - Pull-up interne défaillant
- *    - Rebonds excessifs (ajouter condensateur)
+ * ❌ Unresponsive button interface:
+ *    - Defective or poorly wired button
+ *    - Pin D5 used by other component
+ *    - Internal pull-up defective
+ *    - Excessive bouncing (add capacitor)
  * 
- * ❌ LCD affiche caractères incorrects:
- *    - Conflit adresse I2C (scanner I2C)
- *    - Alimentation instable
- *    - Câblage I2C défaillant
- *    - Module LCD défaillant
+ * ❌ LCD displays incorrect characters:
+ *    - I2C address conflict (I2C scanner)
+ *    - Unstable power supply
+ *    - Defective I2C wiring
+ *    - Defective LCD module
  * 
- * ❌ Capteurs valeurs aberrantes:
- *    - Capteur luminosité: vérifier diviseur résistif
- *    - Fins de course: vérifier pull-up et câblage NO/NC
- *    - Interférences électromagnétiques
- *    - Alimentation bruyante
+ * ❌ Sensors aberrant values:
+ *    - Light sensor: check resistive divider
+ *    - Limit switches: check pull-up and NO/NC wiring
+ *    - Electromagnetic interference
+ *    - Noisy power supply
  * 
- * ❌ Moteur ne répond pas aux commandes:
- *    - L298N non alimenté en 12V
- *    - Connexions moteur inversées ou débranchées
- *    - L298N défaillant (surchauffe)
- *    - Pins Arduino D6/D7 défaillantes
+ * ❌ Motor doesn't respond to commands:
+ *    - L298N not powered with 12V
+ *    - Motor connections reversed or disconnected
+ *    - Defective L298N (overheating)
+ *    - Defective Arduino pins D6/D7
  * 
- * ❌ EEPROM ne sauvegarde pas:
- *    - Arduino Nano défaillant (rare)
- *    - Coupure alimentation pendant écriture
- *    - Usure EEPROM (>100000 cycles)
- *    - Adresse mémoire corrompue
+ * ❌ EEPROM doesn't save:
+ *    - Defective Arduino Nano (rare)
+ *    - Power cut during write
+ *    - EEPROM wear (>100000 cycles)
+ *    - Corrupted memory address
  * 
- * ❌ Système instable/resets intempestifs:
- *    - Alimentation insuffisante ou instable
- *    - Parasites moteur (condensateurs manquants)
- *    - Court-circuit intermittent
- *    - Watchdog Arduino (code bloqué)
+ * ❌ Unstable system/random resets:
+ *    - Insufficient or unstable power supply
+ *    - Motor interference (missing capacitors)
+ *    - Intermittent short circuit
+ *    - Arduino watchdog (blocked code)
  * 
- * 🔧 Tests de validation complète:
- *    - Tous les modules détectés à l'initialisation
- *    - Interface utilisateur 100% réactive
- *    - Capteurs donnent valeurs cohérentes
- *    - Actionneurs répondent aux commandes
- *    - Paramètres sauvegardés et rechargés
- *    - Aucun reset ou blocage pendant 15 minutes
+ * 🔧 Complete validation tests:
+ *    - All modules detected at initialization
+ *    - 100% responsive user interface
+ *    - Sensors give coherent values
+ *    - Actuators respond to commands
+ *    - Parameters saved and reloaded
+ *    - No reset or freeze during 15 minutes
  * 
- * 📊 Critères de succès:
- *    - Initialisation: 6/7 modules OK minimum
- *    - Tests automatiques: <20% d'échecs
- *    - Stabilité: Fonctionnement continu >15min
- *    - Interface: Navigation fluide entre tous les modes
+ * 📊 Success criteria:
+ *    - Initialization: 6/7 modules OK minimum
+ *    - Automatic tests: <20% failures
+ *    - Stability: Continuous operation >15min
+ *    - Interface: Smooth navigation between all modes
  * 
  * ============================================================================
  */

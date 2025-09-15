@@ -1,35 +1,35 @@
 /*
  * ============================================================================
- * TEST RTC DS3231 - Poulailler Automatique
+ * RTC DS3231 TEST - Automatic Chicken Coop
  * ============================================================================
  * 
  * Test: 2.2 - RTC DS3231 Time Keeping & I2C Communication
- * Objectif: Vérifier communication I2C et fonctionnement RTC
- * Durée: ~10 minutes
+ * Objective: Verify I2C communication and RTC functionality
+ * Duration: ~10 minutes
  * 
- * Ce test vérifie:
- * - Communication I2C avec DS3231
- * - Lecture de l'heure en temps réel
- * - Fonctionnement de la pile de sauvegarde
- * - Précision du timing
+ * This test verifies:
+ * - I2C communication with DS3231
+ * - Real-time clock reading
+ * - Backup battery functionality
+ * - Timing accuracy
  * 
- * Câblage requis:
+ * Required wiring:
  * DS3231 VCC → Arduino 5V
  * DS3231 GND → Arduino GND  
  * DS3231 SDA → Arduino A4
  * DS3231 SCL → Arduino A5
  * 
- * Procédure:
- * 1. Uploader ce code sur l'Arduino Nano
- * 2. Ouvrir le moniteur série (9600 bauds)
- * 3. Vérifier détection RTC et affichage heure
- * 4. Si heure incorrecte, suivre instructions pour réglage
- * 5. Observer incrémentation des secondes
+ * Procedure:
+ * 1. Upload this code to Arduino Nano
+ * 2. Open serial monitor (9600 baud)
+ * 3. Verify RTC detection and time display
+ * 4. If time incorrect, follow instructions for setting
+ * 5. Observe seconds incrementing
  * 
- * Résultat attendu:
- * - RTC détecté sur bus I2C
- * - Heure affichée et qui s'incrémente
- * - Température du module DS3231 affichée
+ * Expected result:
+ * - RTC detected on I2C bus
+ * - Time displayed and incrementing
+ * - DS3231 module temperature displayed
  * 
  * ============================================================================
  */
@@ -37,40 +37,40 @@
 #include <Wire.h>
 #include <RTClib.h>
 
-// Variables globales
+// Global variables
 RTC_DS3231 rtc;
-unsigned long dernierAffichage = 0;
-unsigned long compteurSecondes = 0;
-DateTime heureInitiale;
-bool rtcInitialise = false;
+unsigned long lastDisplay = 0;
+unsigned long secondCounter = 0;
+DateTime initialTime;
+bool rtcInitialized = false;
 
 void setup() {
-  // Initialisation communication série
+  // Initialize serial communication
   Serial.begin(9600);
-  delay(1000); // Attendre stabilisation
+  delay(1000); // Wait for stabilization
   
   Serial.println("============================================");
-  Serial.println("TEST RTC DS3231 - Poulailler Automatique");
+  Serial.println("RTC DS3231 TEST - Automatic Chicken Coop");
   Serial.println("============================================");
   Serial.println("Version: 1.0");
   Serial.println("Test: 2.2 - RTC Time Keeping & I2C");
   Serial.println("");
   
-  // Test communication I2C
-  Serial.println("🔍 Initialisation RTC DS3231...");
+  // Test I2C communication
+  Serial.println("🔍 Initializing RTC DS3231...");
   
   if (!rtc.begin()) {
-    Serial.println("❌ ÉCHEC: RTC DS3231 non trouvé sur bus I2C !");
+    Serial.println("❌ FAILURE: RTC DS3231 not found on I2C bus!");
     Serial.println("");
-    Serial.println("Vérifications à effectuer:");
-    Serial.println("- Câblage I2C: SDA→A4, SCL→A5");
-    Serial.println("- Alimentation: VCC→5V, GND→GND");
-    Serial.println("- Module DS3231 fonctionnel");
-    Serial.println("- Contacts soudures du module");
+    Serial.println("Checks to perform:");
+    Serial.println("- I2C wiring: SDA→A4, SCL→A5");
+    Serial.println("- Power supply: VCC→5V, GND→GND");
+    Serial.println("- DS3231 module functional");
+    Serial.println("- Module solder joints");
     Serial.println("");
-    Serial.println("⏸️  Test arrêté - Corriger problème et relancer");
+    Serial.println("⏸️  Test stopped - Fix problem and restart");
     
-    // Clignotement d'erreur
+    // Error blinking
     pinMode(LED_BUILTIN, OUTPUT);
     while(true) {
       digitalWrite(LED_BUILTIN, HIGH);
@@ -80,20 +80,20 @@ void setup() {
     }
   }
   
-  Serial.println("✅ RTC DS3231 détecté avec succès !");
-  rtcInitialise = true;
+  Serial.println("✅ RTC DS3231 detected successfully!");
+  rtcInitialized = true;
   
-  // Vérification perte d'alimentation
+  // Check for power loss
   if (rtc.lostPower()) {
     Serial.println("");
-    Serial.println("⚠️  ATTENTION: RTC a perdu l'alimentation !");
-    Serial.println("L'heure doit être réglée.");
+    Serial.println("⚠️  WARNING: RTC lost power!");
+    Serial.println("Time must be set.");
     Serial.println("");
-    Serial.println("Options de réglage:");
-    Serial.println("1. Automatique: heure de compilation");
-    Serial.println("2. Manuel: modifier le code");
+    Serial.println("Setting options:");
+    Serial.println("1. Automatic: compilation time");
+    Serial.println("2. Manual: modify code");
     Serial.println("");
-    Serial.print("Réglage automatique dans 5 secondes...");
+    Serial.print("Automatic setting in 5 seconds...");
     
     for(int i = 5; i > 0; i--) {
       Serial.print(" ");
@@ -102,118 +102,118 @@ void setup() {
     }
     Serial.println("");
     
-    // Réglage automatique avec heure de compilation
+    // Automatic setting with compilation time
     rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
-    Serial.println("✅ Heure réglée automatiquement");
+    Serial.println("✅ Time set automatically");
   } else {
-    Serial.println("✅ Heure RTC préservée (pile fonctionnelle)");
+    Serial.println("✅ RTC time preserved (battery functional)");
   }
   
-  // Lecture heure initiale
-  heureInitiale = rtc.now();
+  // Read initial time
+  initialTime = rtc.now();
   
-  // Informations du module
+  // Module information
   Serial.println("");
-  Serial.println("📊 Informations module DS3231:");
-  Serial.print("- Heure actuelle: ");
-  afficherHeure(heureInitiale);
-  Serial.print("- Température: ");
+  Serial.println("📊 DS3231 Module Information:");
+  Serial.print("- Current time: ");
+  displayTime(initialTime);
+  Serial.print("- Temperature: ");
   Serial.print(rtc.getTemperature());
   Serial.println("°C");
   
   Serial.println("");
-  Serial.println("🕐 Démarrage test temps réel...");
-  Serial.println("Observation: heure doit s'incrémenter chaque seconde");
+  Serial.println("🕐 Starting real-time test...");
+  Serial.println("Observation: time should increment every second");
   Serial.println("");
   
   delay(1000);
 }
 
 void loop() {
-  if (!rtcInitialise) return;
+  if (!rtcInitialized) return;
   
-  // Test toutes les secondes
-  if (millis() - dernierAffichage >= 1000) {
-    dernierAffichage = millis();
-    compteurSecondes++;
+  // Test every second
+  if (millis() - lastDisplay >= 1000) {
+    lastDisplay = millis();
+    secondCounter++;
     
-    // Lecture heure actuelle
-    DateTime maintenant = rtc.now();
+    // Read current time
+    DateTime now = rtc.now();
     
-    // Affichage principal
+    // Main display
     Serial.print("Test #");
-    if (compteurSecondes < 10) Serial.print("0");
-    Serial.print(compteurSecondes);
+    if (secondCounter < 10) Serial.print("0");
+    Serial.print(secondCounter);
     Serial.print(" | ");
-    afficherHeure(maintenant);
+    displayTime(now);
     
-    // Calcul delta temps
-    unsigned long deltaSecondes = maintenant.unixtime() - heureInitiale.unixtime();
+    // Calculate time delta
+    unsigned long deltaSeconds = now.unixtime() - initialTime.unixtime();
     Serial.print(" | Δt=");
-    Serial.print(deltaSecondes);
+    Serial.print(deltaSeconds);
     Serial.print("s");
     
-    // Vérification précision (tolérance ±2 secondes)
-    long difference = (long)deltaSecondes - (long)compteurSecondes;
+    // Check accuracy (tolerance ±2 seconds)
+    long difference = (long)deltaSeconds - (long)secondCounter;
     if (abs(difference) <= 2) {
       Serial.print(" | ✅");
     } else {
-      Serial.print(" | ⚠️ Dérive:");
+      Serial.print(" | ⚠️ Drift:");
       Serial.print(difference);
       Serial.print("s");
     }
     
     Serial.println("");
     
-    // Tests spéciaux à intervalles
-    if (compteurSecondes % 15 == 0) {
+    // Special tests at intervals
+    if (secondCounter % 15 == 0) {
       Serial.println("");
       testTemperature();
       Serial.println("");
     }
     
-    if (compteurSecondes % 30 == 0) {
-      testPrecision(maintenant);
+    if (secondCounter % 30 == 0) {
+      testAccuracy(now);
     }
     
-    // Test terminé après 60 secondes
-    if (compteurSecondes >= 60) {
+    // Test completed after 60 seconds
+    if (secondCounter >= 60) {
       Serial.println("");
       Serial.println("============================================");
-      Serial.println("✅ TEST RTC DS3231 TERMINÉ AVEC SUCCÈS");
+      Serial.println("✅ RTC DS3231 TEST COMPLETED SUCCESSFULLY");
       Serial.println("============================================");
       Serial.println("");
-      Serial.println("📊 Résultats du test:");
-      Serial.print("- Durée d'observation: ");
-      Serial.print(compteurSecondes);
-      Serial.println(" secondes");
-      Serial.println("- Communication I2C: OK");
-      Serial.println("- Incrémentation temps: OK");
-      Serial.println("- Pile de sauvegarde: OK");
+      Serial.println("📊 Test results:");
+      Serial.print("- Observation duration: ");
+      Serial.print(secondCounter);
+      Serial.println(" seconds");
+      Serial.println("- I2C communication: OK");
+      Serial.println("- Time incrementing: OK");
+      Serial.println("- Backup battery: OK");
       
       DateTime final = rtc.now();
-      unsigned long dureeReelle = final.unixtime() - heureInitiale.unixtime();
-      long derive = (long)dureeReelle - (long)compteurSecondes;
+      unsigned long realDuration = final.unixtime() - initialTime.unixtime();
+      long drift = (long)realDuration - (long)secondCounter;
       
-      Serial.print("- Précision: ");
-      if (abs(derive) <= 2) {
-        Serial.println("EXCELLENTE (±2s)");
-      } else if (abs(derive) <= 5) {
-        Serial.println("BONNE (±5s)");
+      Serial.print("- Accuracy: ");
+      if (abs(drift) <= 2) {
+        Serial.println("EXCELLENT (±2s)");
+      } else if (abs(drift) <= 5) {
+        Serial.println("GOOD (±5s)");
       } else {
-        Serial.print("MOYENNE (dérive ");
-        Serial.print(derive);
+        Serial.print("AVERAGE (drift ");
+        Serial.print(drift);
         Serial.println("s)");
       }
       
       Serial.println("");
-      Serial.println("➡️  Prêt pour le test suivant: LCD I2C");
+      Serial.println("➡️  Ready for next test: LCD I2C");
       Serial.println("");
       
-      // Arrêt du test
+      // Stop test
       while (true) {
-        Serial.print("Heure finale: ");
-        afficherHeure(rtc.now());
+        Serial.print("Final time: ");
+        displayTime(rtc.now());
         Serial.print(" | Temp: ");
         Serial.print(rtc.getTemperature());
         Serial.println("°C");
@@ -226,9 +226,9 @@ void loop() {
 }
 
 /*
- * Fonction: Affichage formaté de l'heure
+ * Function: Formatted time display
  */
-void afficherHeure(DateTime dt) {
+void displayTime(DateTime dt) {
   if (dt.hour() < 10) Serial.print("0");
   Serial.print(dt.hour());
   Serial.print(":");
@@ -240,81 +240,81 @@ void afficherHeure(DateTime dt) {
 }
 
 /*
- * Fonction: Test température DS3231
+ * Function: DS3231 temperature test
  */
 void testTemperature() {
   float temp = rtc.getTemperature();
-  Serial.print("🌡️  Température DS3231: ");
+  Serial.print("🌡️  DS3231 Temperature: ");
   Serial.print(temp);
   Serial.print("°C");
   
   if (temp > -40 && temp < 85) {
-    Serial.println(" ✅ (Normale)");
+    Serial.println(" ✅ (Normal)");
   } else {
-    Serial.println(" ⚠️ (Hors plage)");
+    Serial.println(" ⚠️ (Out of range)");
   }
 }
 
 /*
- * Fonction: Test précision timing
+ * Function: Timing accuracy test
  */
-void testPrecision(DateTime maintenant) {
+void testAccuracy(DateTime now) {
   Serial.println("");
-  Serial.println("🎯 Test précision timing:");
+  Serial.println("🎯 Timing accuracy test:");
   
-  unsigned long tempsArduino = millis() / 1000;
-  unsigned long tempsRTC = maintenant.unixtime() - heureInitiale.unixtime();
-  long derive = (long)tempsRTC - (long)tempsArduino;
+  unsigned long arduinoTime = millis() / 1000;
+  unsigned long rtcTime = now.unixtime() - initialTime.unixtime();
+  long drift = (long)rtcTime - (long)arduinoTime;
   
-  Serial.print("- Temps Arduino: ");
-  Serial.print(tempsArduino);
+  Serial.print("- Arduino time: ");
+  Serial.print(arduinoTime);
   Serial.println("s");
-  Serial.print("- Temps RTC: ");
-  Serial.print(tempsRTC);
+  Serial.print("- RTC time: ");
+  Serial.print(rtcTime);
   Serial.println("s");
-  Serial.print("- Dérive: ");
-  Serial.print(derive);
+  Serial.print("- Drift: ");
+  Serial.print(drift);
   Serial.println("s");
   
-  if (abs(derive) <= 1) {
-    Serial.println("- Précision: EXCELLENTE");
-  } else if (abs(derive) <= 3) {
-    Serial.println("- Précision: BONNE");
+  if (abs(drift) <= 1) {
+    Serial.println("- Accuracy: EXCELLENT");
+  } else if (abs(drift) <= 3) {
+    Serial.println("- Accuracy: GOOD");
   } else {
-    Serial.println("- Précision: À surveiller");
+    Serial.println("- Accuracy: To monitor");
   }
 }
 
 /*
  * ============================================================================
- * DIAGNOSTIC ET DÉPANNAGE
+ * DIAGNOSTICS AND TROUBLESHOOTING
  * ============================================================================
  * 
- * ❌ "RTC DS3231 non trouvé sur bus I2C":
- *    - Vérifier câblage: SDA→A4, SCL→A5, VCC→5V, GND→GND
- *    - Vérifier soudures module DS3231
- *    - Tester avec scanner I2C (adresse 0x68)
- *    - Remplacer module DS3231 si défaillant
+ * ❌ "RTC DS3231 not found on I2C bus":
+ *    - Check wiring: SDA→A4, SCL→A5, VCC→5V, GND→GND
+ *    - Check DS3231 module solder joints
+ *    - Test with I2C scanner (address 0x68)
+ *    - Replace DS3231 module if defective
  * 
- * ❌ "RTC a perdu l'alimentation":
- *    - Pile CR2032 déchargée ou mal insérée
- *    - Remplacer pile CR2032
- *    - Vérifier contacts pile sur module
+ * ❌ "RTC lost power":
+ *    - CR2032 battery discharged or poorly inserted
+ *    - Replace CR2032 battery
+ *    - Check battery contacts on module
  * 
- * ❌ Heure incorrecte persistante:
- *    - Forcer réglage: rtc.adjust(DateTime(YYYY,MM,DD,HH,MM,SS))
- *    - Vérifier intégrité pile sauvegarde
- *    - Module RTC défaillant
+ * ❌ Persistent incorrect time:
+ *    - Force setting: rtc.adjust(DateTime(YYYY,MM,DD,HH,MM,SS))
+ *    - Check backup battery integrity
+ *    - Defective RTC module
  * 
- * ❌ Dérive importante (>5s/minute):
- *    - Température extrême (compensation automatique DS3231)
- *    - Module DS3231 défaillant
- *    - Interférences électromagnétiques
+ * ❌ Significant drift (>5s/minute):
+ *    - Extreme temperature (automatic DS3231 compensation)
+ *    - Defective DS3231 module
+ *    - Electromagnetic interference
  * 
- * ❌ Température aberrante:
- *    - Module DS3231 endommagé
- *    - Problème communication I2C
- *    - Remplacer module
+ * ❌ Aberrant temperature:
+ *    - Damaged DS3231 module
+ *    - I2C communication problem
+ *    - Replace module
  * 
  * ============================================================================
  */

@@ -1,227 +1,227 @@
 /*
  * ============================================================================
- * TEST CAPTEURS - Poulailler Automatique
+ * SENSORS TEST - Automatic Chicken Coop
  * ============================================================================
  * 
  * Test: 3.1 - Light Sensor + Limit Switches
- * Objectif: Vérifier fonctionnement de tous les capteurs
- * Durée: ~10 minutes
+ * Objective: Verify all sensor functionality
+ * Duration: ~10 minutes
  * 
- * Ce test vérifie:
- * - Capteur de luminosité (photorésistance + diviseur)
- * - Capteur fin de course HAUT
- * - Capteur fin de course BAS
- * - Variations des valeurs selon conditions
+ * This test verifies:
+ * - Light sensor (photoresistor + voltage divider)
+ * - TOP limit switch sensor
+ * - BOTTOM limit switch sensor
+ * - Value variations according to conditions
  * 
- * Câblage requis:
- * Photorésistance:
+ * Required wiring:
+ * Photoresistor:
  *   LDR pin1 → Arduino 5V
- *   LDR pin2 → Arduino A0 + Résistance 10kΩ pin1
- *   Résistance 10kΩ pin2 → Arduino GND
+ *   LDR pin2 → Arduino A0 + 10kΩ Resistor pin1
+ *   10kΩ Resistor pin2 → Arduino GND
  * 
- * Capteurs fin de course:
- *   Capteur HAUT NO → Arduino D8
- *   Capteur HAUT Common → Arduino GND
- *   Capteur BAS NO → Arduino D9
- *   Capteur BAS Common → Arduino GND
+ * Limit switch sensors:
+ *   TOP sensor NO → Arduino D8
+ *   TOP sensor Common → Arduino GND
+ *   BOTTOM sensor NO → Arduino D9
+ *   BOTTOM sensor Common → Arduino GND
  * 
- * Procédure:
- * 1. Uploader ce code sur l'Arduino Nano
- * 2. Ouvrir moniteur série (9600 bauds)
- * 3. Couvrir/découvrir capteur luminosité
- * 4. Appuyer sur capteurs fin de course
- * 5. Observer variations dans moniteur série
+ * Procedure:
+ * 1. Upload this code to Arduino Nano
+ * 2. Open serial monitor (9600 baud)
+ * 3. Cover/uncover light sensor
+ * 4. Press limit switch sensors
+ * 5. Observe variations in serial monitor
  * 
- * Résultat attendu:
- * - Valeurs luminosité variables (50-900)
- * - Capteurs fin de course changent d'état
- * - Réponse immédiate aux actions utilisateur
+ * Expected result:
+ * - Variable light values (50-900)
+ * - Limit switches change state
+ * - Immediate response to user actions
  * 
  * ============================================================================
  */
 
-// Configuration des pins
-const int CAPTEUR_LUMIERE = A0;
-const int FIN_COURSE_HAUT = 8;
-const int FIN_COURSE_BAS = 9;
+// Pin configuration
+const int LIGHT_SENSOR = A0;
+const int TOP_LIMIT_SWITCH = 8;
+const int BOTTOM_LIMIT_SWITCH = 9;
 
-// Variables globales
-unsigned long dernierAffichage = 0;
-unsigned long compteurTest = 0;
+// Global variables
+unsigned long lastDisplay = 0;
+unsigned long testCounter = 0;
 
-// Variables pour détection changements
-int ancienneValeurLumiere = -1;
-bool ancienEtatHaut = true;
-bool ancienEtatBas = true;
+// Variables for change detection
+int previousLightValue = -1;
+bool previousTopState = true;
+bool previousBottomState = true;
 
-// Statistiques pour le test
-int valeurLumiereMin = 1023;
-int valeurLumiereMax = 0;
-int nombreChangementsHaut = 0;
-int nombreChangementsBas = 0;
-bool testHautEffectue = false;
-bool testBasEffectue = false;
+// Test statistics
+int lightValueMin = 1023;
+int lightValueMax = 0;
+int topChanges = 0;
+int bottomChanges = 0;
+bool topTested = false;
+bool bottomTested = false;
 
 void setup() {
-  // Initialisation communication série
+  // Initialize serial communication
   Serial.begin(9600);
   delay(1000);
   
   Serial.println("============================================");
-  Serial.println("TEST CAPTEURS - Poulailler Automatique");
+  Serial.println("SENSORS TEST - Automatic Chicken Coop");
   Serial.println("============================================");
   Serial.println("Version: 1.0");
   Serial.println("Test: 3.1 - Light Sensor + Limit Switches");
   Serial.println("");
   
-  // Configuration des pins
-  pinMode(FIN_COURSE_HAUT, INPUT_PULLUP);
-  pinMode(FIN_COURSE_BAS, INPUT_PULLUP);
+  // Pin configuration
+  pinMode(TOP_LIMIT_SWITCH, INPUT_PULLUP);
+  pinMode(BOTTOM_LIMIT_SWITCH, INPUT_PULLUP);
   
-  // Test initial des capteurs
-  Serial.println("🔍 Test initial des capteurs...");
+  // Initial sensor test
+  Serial.println("🔍 Initial sensor test...");
   Serial.println("");
   
-  // Test capteur luminosité
-  int valeurInit = analogRead(CAPTEUR_LUMIERE);
-  Serial.print("💡 Capteur luminosité (A0): ");
-  Serial.print(valeurInit);
+  // Test light sensor
+  int initValue = analogRead(LIGHT_SENSOR);
+  Serial.print("💡 Light sensor (A0): ");
+  Serial.print(initValue);
   Serial.print(" (");
-  if (valeurInit > 800) Serial.println("TRÈS CLAIR)");
-  else if (valeurInit > 400) Serial.println("CLAIR)");
-  else if (valeurInit > 200) Serial.println("SOMBRE)");
-  else Serial.println("TRÈS SOMBRE)");
+  if (initValue > 800) Serial.println("VERY BRIGHT)");
+  else if (initValue > 400) Serial.println("BRIGHT)");
+  else if (initValue > 200) Serial.println("DIM)");
+  else Serial.println("VERY DIM)");
   
-  // Test capteurs fin de course
-  bool etatHautInit = digitalRead(FIN_COURSE_HAUT);
-  bool etatBasInit = digitalRead(FIN_COURSE_BAS);
+  // Test limit switches
+  bool topInitState = digitalRead(TOP_LIMIT_SWITCH);
+  bool bottomInitState = digitalRead(BOTTOM_LIMIT_SWITCH);
   
-  Serial.print("🔘 Capteur fin course HAUT (D8): ");
-  Serial.println(etatHautInit ? "LIBRE" : "ACTIONNÉ");
-  Serial.print("🔘 Capteur fin course BAS (D9): ");
-  Serial.println(etatBasInit ? "LIBRE" : "ACTIONNÉ");
+  Serial.print("🔘 TOP limit switch (D8): ");
+  Serial.println(topInitState ? "FREE" : "PRESSED");
+  Serial.print("🔘 BOTTOM limit switch (D9): ");
+  Serial.println(bottomInitState ? "FREE" : "PRESSED");
   
   Serial.println("");
-  Serial.println("📋 Instructions de test:");
-  Serial.println("1. LUMINOSITÉ: Couvrez/découvrez le capteur avec votre main");
-  Serial.println("2. ÉCLAIRAGE: Utilisez la lampe de votre téléphone");
-  Serial.println("3. FIN COURSE: Appuyez physiquement sur chaque capteur");
+  Serial.println("📋 Test instructions:");
+  Serial.println("1. LIGHT: Cover/uncover sensor with your hand");
+  Serial.println("2. LIGHTING: Use your phone's flashlight");
+  Serial.println("3. LIMIT SWITCHES: Physically press each sensor");
   Serial.println("");
-  Serial.println("🕐 Test automatique pendant 60 secondes...");
-  Serial.println("Observer les valeurs et tester les capteurs manuellement");
+  Serial.println("🕐 Automatic test for 60 seconds...");
+  Serial.println("Observe values and test sensors manually");
   Serial.println("");
   
-  // Initialisation valeurs de référence
-  ancienneValeurLumiere = valeurInit;
-  ancienEtatHaut = etatHautInit;
-  ancienEtatBas = etatBasInit;
+  // Initialize reference values
+  previousLightValue = initValue;
+  previousTopState = topInitState;
+  previousBottomState = bottomInitState;
   
   delay(2000);
 }
 
 void loop() {
-  // Mise à jour toutes les 200ms pour réactivité
-  if (millis() - dernierAffichage >= 200) {
-    dernierAffichage = millis();
-    compteurTest++;
+  // Update every 200ms for responsiveness
+  if (millis() - lastDisplay >= 200) {
+    lastDisplay = millis();
+    testCounter++;
     
-    // Lecture de tous les capteurs
-    int valeurLumiere = analogRead(CAPTEUR_LUMIERE);
-    bool etatHaut = digitalRead(FIN_COURSE_HAUT);
-    bool etatBas = digitalRead(FIN_COURSE_BAS);
+    // Read all sensors
+    int lightValue = analogRead(LIGHT_SENSOR);
+    bool topState = digitalRead(TOP_LIMIT_SWITCH);
+    bool bottomState = digitalRead(BOTTOM_LIMIT_SWITCH);
     
-    // Mise à jour statistiques luminosité
-    if (valeurLumiere < valeurLumiereMin) valeurLumiereMin = valeurLumiere;
-    if (valeurLumiere > valeurLumiereMax) valeurLumiereMax = valeurLumiere;
+    // Update light statistics
+    if (lightValue < lightValueMin) lightValueMin = lightValue;
+    if (lightValue > lightValueMax) lightValueMax = lightValue;
     
-    // Détection changements capteurs fin de course
-    if (etatHaut != ancienEtatHaut) {
-      nombreChangementsHaut++;
-      testHautEffectue = true;
-      Serial.print("🔄 HAUT: ");
-      Serial.println(etatHaut ? "LIBRE" : "ACTIONNÉ ✅");
-      ancienEtatHaut = etatHaut;
+    // Detect limit switch changes
+    if (topState != previousTopState) {
+      topChanges++;
+      topTested = true;
+      Serial.print("🔄 TOP: ");
+      Serial.println(topState ? "FREE" : "PRESSED ✅");
+      previousTopState = topState;
     }
     
-    if (etatBas != ancienEtatBas) {
-      nombreChangementsBas++;
-      testBasEffectue = true;
-      Serial.print("🔄 BAS: ");
-      Serial.println(etatBas ? "LIBRE" : "ACTIONNÉ ✅");
-      ancienEtatBas = etatBas;
+    if (bottomState != previousBottomState) {
+      bottomChanges++;
+      bottomTested = true;
+      Serial.print("🔄 BOTTOM: ");
+      Serial.println(bottomState ? "FREE" : "PRESSED ✅");
+      previousBottomState = bottomState;
     }
     
-    // Affichage principal toutes les secondes
-    if (compteurTest % 5 == 0) {
+    // Main display every second
+    if (testCounter % 5 == 0) {
       Serial.print("Test ");
-      Serial.print(compteurTest / 5);
-      Serial.print("s | Lum: ");
+      Serial.print(testCounter / 5);
+      Serial.print("s | Light: ");
       
-      // Affichage valeur luminosité avec barre visuelle
-      if (valeurLumiere < 100) Serial.print("  ");
-      else if (valeurLumiere < 1000) Serial.print(" ");
-      Serial.print(valeurLumiere);
+      // Display light value with visual bar
+      if (lightValue < 100) Serial.print("  ");
+      else if (lightValue < 1000) Serial.print(" ");
+      Serial.print(lightValue);
       
-      // Barre de progression visuelle
+      // Visual progress bar
       Serial.print(" [");
-      int barres = map(valeurLumiere, 0, 1023, 0, 10);
+      int bars = map(lightValue, 0, 1023, 0, 10);
       for (int i = 0; i < 10; i++) {
-        if (i < barres) Serial.print("█");
+        if (i < bars) Serial.print("█");
         else Serial.print("-");
       }
       Serial.print("]");
       
-      // États capteurs fin de course
-      Serial.print(" | H:");
-      Serial.print(etatHaut ? "○" : "●");
+      // Limit switch states
+      Serial.print(" | T:");
+      Serial.print(topState ? "○" : "●");
       Serial.print(" B:");
-      Serial.print(etatBas ? "○" : "●");
+      Serial.print(bottomState ? "○" : "●");
       
-      // Détection variation significative luminosité
-      int variation = abs(valeurLumiere - ancienneValeurLumiere);
+      // Detect significant light variation
+      int variation = abs(lightValue - previousLightValue);
       if (variation > 50) {
         Serial.print(" 🔄");
-        ancienneValeurLumiere = valeurLumiere;
+        previousLightValue = lightValue;
       }
       
       Serial.println("");
     }
     
-    // Messages d'encouragement
-    if (compteurTest == 50) { // 10 secondes
+    // Encouragement messages
+    if (testCounter == 50) { // 10 seconds
       Serial.println("");
-      Serial.println("💡 Essayez de couvrir le capteur de luminosité!");
-      Serial.println("");
-    }
-    
-    if (compteurTest == 150) { // 30 secondes
-      Serial.println("");
-      Serial.println("🔘 N'oubliez pas de tester les capteurs fin de course!");
+      Serial.println("💡 Try covering the light sensor!");
       Serial.println("");
     }
     
-    // Test terminé après 60 secondes (300 * 200ms)
-    if (compteurTest >= 300) {
-      afficherResultatsFinaux(valeurLumiere, etatHaut, etatBas);
+    if (testCounter == 150) { // 30 seconds
+      Serial.println("");
+      Serial.println("🔘 Don't forget to test the limit switches!");
+      Serial.println("");
+    }
+    
+    // Test completed after 60 seconds (300 * 200ms)
+    if (testCounter >= 300) {
+      displayFinalResults(lightValue, topState, bottomState);
       
-      // Boucle finale avec affichage continu
+      // Final loop with continuous display
       while (true) {
         delay(500);
         
-        int lum = analogRead(CAPTEUR_LUMIERE);
-        bool h = digitalRead(FIN_COURSE_HAUT);
-        bool b = digitalRead(FIN_COURSE_BAS);
+        int light = analogRead(LIGHT_SENSOR);
+        bool t = digitalRead(TOP_LIMIT_SWITCH);
+        bool b = digitalRead(BOTTOM_LIMIT_SWITCH);
         
-        Serial.print("Final | Lum:");
-        Serial.print(lum);
-        Serial.print(" H:");
-        Serial.print(h ? "○" : "●");
+        Serial.print("Final | Light:");
+        Serial.print(light);
+        Serial.print(" T:");
+        Serial.print(t ? "○" : "●");
         Serial.print(" B:");
         Serial.print(b ? "○" : "●");
-        Serial.print(" | Plage lum: ");
-        Serial.print(valeurLumiereMin);
+        Serial.print(" | Light range: ");
+        Serial.print(lightValueMin);
         Serial.print("-");
-        Serial.println(valeurLumiereMax);
+        Serial.println(lightValueMax);
       }
     }
   }
@@ -230,72 +230,72 @@ void loop() {
 }
 
 /*
- * Fonction: Affichage des résultats finaux
+ * Function: Display final results
  */
-void afficherResultatsFinaux(int lumFinale, bool hautFinal, bool basFinal) {
+void displayFinalResults(int finalLight, bool finalTop, bool finalBottom) {
   Serial.println("");
   Serial.println("============================================");
-  Serial.println("✅ TEST CAPTEURS TERMINÉ");
+  Serial.println("✅ SENSORS TEST COMPLETED");
   Serial.println("============================================");
   Serial.println("");
   
-  Serial.println("📊 Résultats du test:");
+  Serial.println("📊 Test results:");
   Serial.println("");
   
-  // Résultats capteur luminosité
-  Serial.println("💡 CAPTEUR LUMINOSITÉ:");
-  Serial.print("- Valeur finale: ");
-  Serial.println(lumFinale);
-  Serial.print("- Plage observée: ");
-  Serial.print(valeurLumiereMin);
+  // Light sensor results
+  Serial.println("💡 LIGHT SENSOR:");
+  Serial.print("- Final value: ");
+  Serial.println(finalLight);
+  Serial.print("- Observed range: ");
+  Serial.print(lightValueMin);
   Serial.print(" - ");
-  Serial.println(valeurLumiereMax);
+  Serial.println(lightValueMax);
   
-  int plage = valeurLumiereMax - valeurLumiereMin;
-  Serial.print("- Variation totale: ");
-  Serial.print(plage);
-  if (plage > 300) {
-    Serial.println(" ✅ EXCELLENTE");
-  } else if (plage > 100) {
-    Serial.println(" ✅ BONNE");
-  } else if (plage > 50) {
-    Serial.println(" ⚠️ FAIBLE (vérifier câblage)");
+  int range = lightValueMax - lightValueMin;
+  Serial.print("- Total variation: ");
+  Serial.print(range);
+  if (range > 300) {
+    Serial.println(" ✅ EXCELLENT");
+  } else if (range > 100) {
+    Serial.println(" ✅ GOOD");
+  } else if (range > 50) {
+    Serial.println(" ⚠️ WEAK (check wiring)");
   } else {
-    Serial.println(" ❌ TRÈS FAIBLE (problème capteur)");
+    Serial.println(" ❌ VERY WEAK (sensor problem)");
   }
   
-  // Résultats capteurs fin de course
+  // Limit switch results
   Serial.println("");
-  Serial.println("🔘 CAPTEURS FIN DE COURSE:");
-  Serial.print("- Capteur HAUT: ");
-  Serial.print(hautFinal ? "LIBRE" : "ACTIONNÉ");
+  Serial.println("🔘 LIMIT SWITCHES:");
+  Serial.print("- TOP sensor: ");
+  Serial.print(finalTop ? "FREE" : "PRESSED");
   Serial.print(" (");
-  Serial.print(nombreChangementsHaut);
-  Serial.print(" changements) ");
-  Serial.println(testHautEffectue ? "✅" : "⚠️ Non testé");
+  Serial.print(topChanges);
+  Serial.print(" changes) ");
+  Serial.println(topTested ? "✅" : "⚠️ Not tested");
   
-  Serial.print("- Capteur BAS: ");
-  Serial.print(basFinal ? "LIBRE" : "ACTIONNÉ");
+  Serial.print("- BOTTOM sensor: ");
+  Serial.print(finalBottom ? "FREE" : "PRESSED");
   Serial.print(" (");
-  Serial.print(nombreChangementsBas);
-  Serial.print(" changements) ");
-  Serial.println(testBasEffectue ? "✅" : "⚠️ Non testé");
+  Serial.print(bottomChanges);
+  Serial.print(" changes) ");
+  Serial.println(bottomTested ? "✅" : "⚠️ Not tested");
   
-  // Évaluation globale
+  // Overall evaluation
   Serial.println("");
-  Serial.println("🎯 ÉVALUATION GLOBALE:");
+  Serial.println("🎯 OVERALL EVALUATION:");
   
-  bool luminositeOK = (plage > 100);
-  bool capteursOK = (testHautEffectue && testBasEffectue);
+  bool lightOK = (range > 100);
+  bool sensorsOK = (topTested && bottomTested);
   
-  if (luminositeOK && capteursOK) {
-    Serial.println("✅ TOUS CAPTEURS FONCTIONNELS");
-    Serial.println("➡️  Prêt pour le test suivant: Bouton multifonction");
+  if (lightOK && sensorsOK) {
+    Serial.println("✅ ALL SENSORS FUNCTIONAL");
+    Serial.println("➡️  Ready for next test: Multi-function button");
   } else {
-    Serial.println("⚠️  QUELQUES PROBLÈMES DÉTECTÉS:");
-    if (!luminositeOK) Serial.println("- Capteur luminosité: variation insuffisante");
-    if (!capteursOK) Serial.println("- Capteurs fin course: test incomplet");
-    Serial.println("➡️  Vérifier câblage avant test suivant");
+    Serial.println("⚠️  SOME PROBLEMS DETECTED:");
+    if (!lightOK) Serial.println("- Light sensor: insufficient variation");
+    if (!sensorsOK) Serial.println("- Limit switches: incomplete test");
+    Serial.println("➡️  Check wiring before next test");
   }
   
   Serial.println("");
@@ -303,38 +303,38 @@ void afficherResultatsFinaux(int lumFinale, bool hautFinal, bool basFinal) {
 
 /*
  * ============================================================================
- * DIAGNOSTIC ET DÉPANNAGE
+ * DIAGNOSTICS AND TROUBLESHOOTING
  * ============================================================================
  * 
- * ❌ Capteur luminosité valeur fixe 0:
- *    - Court-circuit: vérifier câblage diviseur résistif
- *    - LDR défaillante ou mal connectée
- *    - Résistance 10kΩ mal connectée
+ * ❌ Light sensor fixed value 0:
+ *    - Short circuit: check resistor divider wiring
+ *    - Defective or poorly connected LDR
+ *    - 10kΩ resistor poorly connected
  * 
- * ❌ Capteur luminosité valeur fixe 1023:
- *    - Circuit ouvert: vérifier toutes connexions
- *    - LDR déconnectée de A0
- *    - Résistance 10kΩ non connectée à GND
+ * ❌ Light sensor fixed value 1023:
+ *    - Open circuit: check all connections
+ *    - LDR disconnected from A0
+ *    - 10kΩ resistor not connected to GND
  * 
- * ❌ Capteur luminosité ne varie pas:
- *    - LDR défaillante (tester résistance avec multimètre)
- *    - Éclairage ambiant constant
- *    - Câblage incorrect du diviseur résistif
+ * ❌ Light sensor doesn't vary:
+ *    - Defective LDR (test resistance with multimeter)
+ *    - Constant ambient lighting
+ *    - Incorrect resistor divider wiring
  * 
- * ❌ Capteur fin course toujours "LIBRE":
- *    - Capteur défaillant ou mal câblé
- *    - Connexion NO (Normalement Ouvert) incorrecte
- *    - Pull-up interne non activé (INPUT_PULLUP)
+ * ❌ Limit switch always "FREE":
+ *    - Defective or poorly wired sensor
+ *    - Incorrect NO (Normally Open) connection
+ *    - Internal pull-up not activated (INPUT_PULLUP)
  * 
- * ❌ Capteur fin course toujours "ACTIONNÉ":
- *    - Court-circuit vers GND
- *    - Capteur mécaniquement bloqué
- *    - Câblage inversé (utiliser NC au lieu de NO)
+ * ❌ Limit switch always "PRESSED":
+ *    - Short circuit to GND
+ *    - Mechanically stuck sensor
+ *    - Reversed wiring (use NC instead of NO)
  * 
- * 🔧 Tests manuels complémentaires:
- *    - Multimètre sur A0: doit varier 0-5V selon lumière
- *    - Multimètre sur D8/D9: 5V libre, 0V actionné
- *    - Test résistance LDR: varie 1kΩ-100kΩ selon lumière
+ * 🔧 Additional manual tests:
+ *    - Multimeter on A0: should vary 0-5V with light
+ *    - Multimeter on D8/D9: 5V free, 0V pressed
+ *    - Test LDR resistance: varies 1kΩ-100kΩ with light
  * 
  * ============================================================================
  */

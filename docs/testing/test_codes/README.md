@@ -1,4 +1,4 @@
-# 🧪 Test Codes - Chicken Coop Door
+# 🧪 Test Codes - Automatic Chicken Coop
 
 > Arduino test sketches for systematic component validation
 
