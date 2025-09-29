@@ -49,26 +49,26 @@ void setup() {
   Serial.begin(9600);
   delay(1000); // Wait for stabilization
   
-  Serial.println("============================================");
-  Serial.println("RTC DS3231 TEST - Automatic Chicken Coop");
-  Serial.println("============================================");
-  Serial.println("Version: 1.0");
-  Serial.println("Test: 2.2 - RTC Time Keeping & I2C");
-  Serial.println("");
+  Serial.println(F("============================================"));
+  Serial.println(F("RTC DS3231 TEST - Automatic Chicken Coop"));
+  Serial.println(F("============================================"));
+  Serial.println(F("Version: 1.0"));
+  Serial.println(F("Test: 2.2 - RTC Time Keeping & I2C"));
+  Serial.println();
   
   // Test I2C communication
-  Serial.println("🔍 Initializing RTC DS3231...");
+  Serial.println(F("🔍 Initializing RTC DS3231..."));
   
   if (!rtc.begin()) {
-    Serial.println("❌ FAILURE: RTC DS3231 not found on I2C bus!");
-    Serial.println("");
-    Serial.println("Checks to perform:");
-    Serial.println("- I2C wiring: SDA→A4, SCL→A5");
-    Serial.println("- Power supply: VCC→5V, GND→GND");
-    Serial.println("- DS3231 module functional");
-    Serial.println("- Module solder joints");
-    Serial.println("");
-    Serial.println("⏸️  Test stopped - Fix problem and restart");
+    Serial.println(F("❌ FAILURE: RTC DS3231 not found on I2C bus!"));
+    Serial.println();
+    Serial.println(F("Checks to perform:"));
+    Serial.println(F("- I2C wiring: SDA→A4, SCL→A5"));
+    Serial.println(F("- Power supply: VCC→5V, GND→GND"));
+    Serial.println(F("- DS3231 module functional"));
+    Serial.println(F("- Module solder joints"));
+    Serial.println();
+    Serial.println(F("⏸️  Test stopped - Fix problem and restart"));
     
     // Error blinking
     pinMode(LED_BUILTIN, OUTPUT);
@@ -80,51 +80,51 @@ void setup() {
     }
   }
   
-  Serial.println("✅ RTC DS3231 detected successfully!");
+  Serial.println(F("✅ RTC DS3231 detected successfully!"));
   rtcInitialized = true;
   
   // Check for power loss
   if (rtc.lostPower()) {
-    Serial.println("");
-    Serial.println("⚠️  WARNING: RTC lost power!");
-    Serial.println("Time must be set.");
-    Serial.println("");
-    Serial.println("Setting options:");
-    Serial.println("1. Automatic: compilation time");
-    Serial.println("2. Manual: modify code");
-    Serial.println("");
-    Serial.print("Automatic setting in 5 seconds...");
+    Serial.println();
+    Serial.println(F("⚠️  WARNING: RTC lost power!"));
+    Serial.println(F("Time must be set."));
+    Serial.println();
+    Serial.println(F("Setting options:"));
+    Serial.println(F("1. Automatic: compilation time"));
+    Serial.println(F("2. Manual: modify code"));
+    Serial.println();
+    Serial.print(F("Automatic setting in 5 seconds..."));
     
     for(int i = 5; i > 0; i--) {
-      Serial.print(" ");
+      Serial.print(F(" "));
       Serial.print(i);
       delay(1000);
     }
-    Serial.println("");
+    Serial.println();
     
     // Automatic setting with compilation time
     rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
-    Serial.println("✅ Time set automatically");
+    Serial.println(F("✅ Time set automatically"));
   } else {
-    Serial.println("✅ RTC time preserved (battery functional)");
+    Serial.println(F("✅ RTC time preserved (battery functional)"));
   }
   
   // Read initial time
   initialTime = rtc.now();
   
   // Module information
-  Serial.println("");
-  Serial.println("📊 DS3231 Module Information:");
-  Serial.print("- Current time: ");
+  Serial.println();
+  Serial.println(F("📊 DS3231 Module Information:"));
+  Serial.print(F("- Current time: "));
   displayTime(initialTime);
-  Serial.print("- Temperature: ");
+  Serial.print(F("- Temperature: "));
   Serial.print(rtc.getTemperature());
-  Serial.println("°C");
+  Serial.println(F("°C"));
   
-  Serial.println("");
-  Serial.println("🕐 Starting real-time test...");
-  Serial.println("Observation: time should increment every second");
-  Serial.println("");
+  Serial.println();
+  Serial.println(F("🕐 Starting real-time test..."));
+  Serial.println(F("Observation: time should increment every second"));
+  Serial.println();
   
   delay(1000);
 }
@@ -141,35 +141,35 @@ void loop() {
     DateTime now = rtc.now();
     
     // Main display
-    Serial.print("Test #");
-    if (secondCounter < 10) Serial.print("0");
+    Serial.print(F("Test #"));
+    if (secondCounter < 10) Serial.print(F("0"));
     Serial.print(secondCounter);
-    Serial.print(" | ");
+    Serial.print(F(" | "));
     displayTime(now);
     
     // Calculate time delta
     unsigned long deltaSeconds = now.unixtime() - initialTime.unixtime();
-    Serial.print(" | Δt=");
+    Serial.print(F(" | Δt="));
     Serial.print(deltaSeconds);
-    Serial.print("s");
+    Serial.print(F("s"));
     
     // Check accuracy (tolerance ±2 seconds)
     long difference = (long)deltaSeconds - (long)secondCounter;
     if (abs(difference) <= 2) {
-      Serial.print(" | ✅");
+      Serial.print(F(" | ✅"));
     } else {
-      Serial.print(" | ⚠️ Drift:");
+      Serial.print(F(" | ⚠️ Drift:"));
       Serial.print(difference);
-      Serial.print("s");
+      Serial.print(F("s"));
     }
     
-    Serial.println("");
+    Serial.println();
     
     // Special tests at intervals
     if (secondCounter % 15 == 0) {
-      Serial.println("");
+      Serial.println();
       testTemperature();
-      Serial.println("");
+      Serial.println();
     }
     
     if (secondCounter % 30 == 0) {
@@ -178,45 +178,45 @@ void loop() {
     
     // Test completed after 60 seconds
     if (secondCounter >= 60) {
-      Serial.println("");
-      Serial.println("============================================");
-      Serial.println("✅ RTC DS3231 TEST COMPLETED SUCCESSFULLY");
-      Serial.println("============================================");
-      Serial.println("");
-      Serial.println("📊 Test results:");
-      Serial.print("- Observation duration: ");
+      Serial.println();
+      Serial.println(F("============================================"));
+      Serial.println(F("✅ RTC DS3231 TEST COMPLETED SUCCESSFULLY"));
+      Serial.println(F("============================================"));
+      Serial.println();
+      Serial.println(F("📊 Test results:"));
+      Serial.print(F("- Observation duration: "));
       Serial.print(secondCounter);
-      Serial.println(" seconds");
-      Serial.println("- I2C communication: OK");
-      Serial.println("- Time incrementing: OK");
-      Serial.println("- Backup battery: OK");
+      Serial.println(F(" seconds"));
+      Serial.println(F("- I2C communication: OK"));
+      Serial.println(F("- Time incrementing: OK"));
+      Serial.println(F("- Backup battery: OK"));
       
       DateTime final = rtc.now();
       unsigned long realDuration = final.unixtime() - initialTime.unixtime();
       long drift = (long)realDuration - (long)secondCounter;
       
-      Serial.print("- Accuracy: ");
+      Serial.print(F("- Accuracy: "));
       if (abs(drift) <= 2) {
-        Serial.println("EXCELLENT (±2s)");
+        Serial.println(F("EXCELLENT (±2s)"));
       } else if (abs(drift) <= 5) {
-        Serial.println("GOOD (±5s)");
+        Serial.println(F("GOOD (±5s)"));
       } else {
-        Serial.print("AVERAGE (drift ");
+        Serial.print(F("AVERAGE (drift "));
         Serial.print(drift);
-        Serial.println("s)");
+        Serial.println(F("s)"));
       }
       
-      Serial.println("");
-      Serial.println("➡️  Ready for next test: LCD I2C");
-      Serial.println("");
+      Serial.println();
+      Serial.println(F("➡️  Ready for next test: LCD I2C"));
+      Serial.println();
       
       // Stop test
       while (true) {
-        Serial.print("Final time: ");
+        Serial.print(F("Final time: "));
         displayTime(rtc.now());
-        Serial.print(" | Temp: ");
+        Serial.print(F(" | Temp: "));
         Serial.print(rtc.getTemperature());
-        Serial.println("°C");
+        Serial.println(F("°C"));
         delay(5000);
       }
     }
@@ -229,13 +229,13 @@ void loop() {
  * Function: Formatted time display
  */
 void displayTime(DateTime dt) {
-  if (dt.hour() < 10) Serial.print("0");
+  if (dt.hour() < 10) Serial.print(F("0"));
   Serial.print(dt.hour());
-  Serial.print(":");
-  if (dt.minute() < 10) Serial.print("0");
+  Serial.print(F(":"));
+  if (dt.minute() < 10) Serial.print(F("0"));
   Serial.print(dt.minute());
-  Serial.print(":");
-  if (dt.second() < 10) Serial.print("0");
+  Serial.print(F(":"));
+  if (dt.second() < 10) Serial.print(F("0"));
   Serial.print(dt.second());
 }
 
@@ -244,14 +244,14 @@ void displayTime(DateTime dt) {
  */
 void testTemperature() {
   float temp = rtc.getTemperature();
-  Serial.print("🌡️  DS3231 Temperature: ");
+  Serial.print(F("🌡️  DS3231 Temperature: "));
   Serial.print(temp);
-  Serial.print("°C");
+  Serial.print(F("°C"));
   
   if (temp > -40 && temp < 85) {
-    Serial.println(" ✅ (Normal)");
+    Serial.println(F(" ✅ (Normal)"));
   } else {
-    Serial.println(" ⚠️ (Out of range)");
+    Serial.println(F(" ⚠️ (Out of range)"));
   }
 }
 
@@ -259,29 +259,29 @@ void testTemperature() {
  * Function: Timing accuracy test
  */
 void testAccuracy(DateTime now) {
-  Serial.println("");
-  Serial.println("🎯 Timing accuracy test:");
+  Serial.println();
+  Serial.println(F("🎯 Timing accuracy test:"));
   
   unsigned long arduinoTime = millis() / 1000;
   unsigned long rtcTime = now.unixtime() - initialTime.unixtime();
   long drift = (long)rtcTime - (long)arduinoTime;
   
-  Serial.print("- Arduino time: ");
+  Serial.print(F("- Arduino time: "));
   Serial.print(arduinoTime);
-  Serial.println("s");
-  Serial.print("- RTC time: ");
+  Serial.println(F("s"));
+  Serial.print(F("- RTC time: "));
   Serial.print(rtcTime);
-  Serial.println("s");
-  Serial.print("- Drift: ");
+  Serial.println(F("s"));
+  Serial.print(F("- Drift: "));
   Serial.print(drift);
-  Serial.println("s");
+  Serial.println(F("s"));
   
   if (abs(drift) <= 1) {
-    Serial.println("- Accuracy: EXCELLENT");
+    Serial.println(F("- Accuracy: EXCELLENT"));
   } else if (abs(drift) <= 3) {
-    Serial.println("- Accuracy: GOOD");
+    Serial.println(F("- Accuracy: GOOD"));
   } else {
-    Serial.println("- Accuracy: To monitor");
+    Serial.println(F("- Accuracy: To monitor"));
   }
 }
 

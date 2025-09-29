@@ -3,7 +3,7 @@
  * COMPLETE SYSTEM TEST - Automatic Chicken Coop
  * ============================================================================
  * 
- * Test: 7.1 - Complete System Integration
+ * Test: 7.1 - Complete System Integration (Memory Optimized)
  * Objective: Validate complete integration of all components
  * Duration: ~15 minutes
  * 
@@ -25,15 +25,7 @@
  * - Status LED
  * - L298N module + motor (⚠️ DISCONNECTED from mechanism)
  * 
- * Procedure:
- * 1. Upload this code (simplified version of final project)
- * 2. Verify LCD display and button navigation
- * 3. Test all sensors simultaneously  
- * 4. Validate automatic logic (simulation)
- * 5. Check parameter backup
- * 
- * ⚠️ SAFETY: Motor disconnected from mechanism to avoid 
- * unwanted movements during tests
+ * ⚠️ SAFETY: Motor disconnected from mechanism to avoid unwanted movements
  * 
  * ============================================================================
  */
@@ -43,7 +35,7 @@
 #include <LiquidCrystal_I2C.h>
 #include <EEPROM.h>
 
-// Pin configuration (identical to final project)
+// Pin configuration
 const int MOTOR_PIN1 = 7;
 const int MOTOR_PIN2 = 6;
 const int LIGHT_SENSOR = A0;
@@ -84,26 +76,22 @@ unsigned long settingsModeStart = 0;
 bool blinking = false;
 unsigned long lastBlink = 0;
 
-// Complete test variables
-unsigned long completeTestStart = 0;
+// Test variables
 int completeTestPhase = 0;
 bool testInProgress = false;
-
-// Test statistics
-int testsSucceeded = 0;
-int testsFailed = 0;
-String lastProblem = "";
+byte testsSucceeded = 0;
+byte testsFailed = 0;
 
 void setup() {
   Serial.begin(9600);
   delay(1000);
   
-  Serial.println("============================================");
-  Serial.println("COMPLETE SYSTEM TEST - Chicken Coop Auto");
-  Serial.println("============================================");
-  Serial.println("Version: 1.0");
-  Serial.println("Test: 7.1 - Complete System Integration");
-  Serial.println("");
+  Serial.println(F("============================================"));
+  Serial.println(F("COMPLETE SYSTEM TEST - Chicken Coop Auto"));
+  Serial.println(F("============================================"));
+  Serial.println(F("Version: 1.0"));
+  Serial.println(F("Test: 7.1 - Complete System Integration"));
+  Serial.println();
   
   // Pin initialization
   pinMode(MOTOR_PIN1, OUTPUT);
@@ -117,117 +105,114 @@ void setup() {
   digitalWrite(MOTOR_PIN1, LOW);
   digitalWrite(MOTOR_PIN2, LOW);
   
-  Serial.println("🔧 MODULE INITIALIZATION:");
-  Serial.println("");
+  Serial.println(F("MODULE INIT:"));
+  Serial.println();
   
   // Test LCD
-  Serial.print("1. LCD I2C... ");
+  Serial.print(F("1. LCD I2C... "));
   lcd.init();
   lcd.backlight();
   lcd.setCursor(0, 0);
-  lcd.print("Complete Test");
+  lcd.print(F("Complete Test"));
   lcd.setCursor(0, 1);
-  lcd.print("Initializing...");
+  lcd.print(F("Initializing..."));
   delay(1000);
-  Serial.println("✅ OK");
+  Serial.println(F("OK"));
+  testsSucceeded++;
   
   // Test RTC
-  Serial.print("2. RTC DS3231... ");
+  Serial.print(F("2. RTC DS3231... "));
   if (!rtc.begin()) {
-    Serial.println("❌ FAILED");
+    Serial.println(F("FAILED"));
     testsFailed++;
-    lastProblem = "RTC not detected";
   } else {
-    Serial.println("✅ OK");
+    Serial.println(F("OK"));
     testsSucceeded++;
   }
   
   // Test sensors
-  Serial.print("3. Light sensor... ");
+  Serial.print(F("3. Light sensor... "));
   int light = analogRead(LIGHT_SENSOR);
   if (light > 0 && light < 1023) {
-    Serial.print("✅ OK (value: ");
+    Serial.print(F("OK ("));
     Serial.print(light);
-    Serial.println(")");
+    Serial.println(F(")"));
     testsSucceeded++;
   } else {
-    Serial.println("⚠️ Edge values");
+    Serial.println(F("Edge values"));
   }
   
-  Serial.print("4. Limit switches... ");
+  Serial.print(F("4. Limit switches... "));
   bool top = digitalRead(TOP_LIMIT_SWITCH);
   bool bottom = digitalRead(BOTTOM_LIMIT_SWITCH);
-  Serial.print("✅ OK (T:");
-  Serial.print(top ? "Free" : "Pressed");
-  Serial.print(", B:");
-  Serial.print(bottom ? "Free" : "Pressed");
-  Serial.println(")");
+  Serial.print(F("OK (T:"));
+  Serial.print(top ? F("Free") : F("Pressed"));
+  Serial.print(F(", B:"));
+  Serial.print(bottom ? F("Free") : F("Pressed"));
+  Serial.println(F(")"));
   testsSucceeded++;
   
-  Serial.print("5. Button... ");
+  Serial.print(F("5. Button... "));
   bool button = digitalRead(BUTTON_PIN);
   if (button == HIGH) {
-    Serial.println("✅ OK (pull-up active)");
+    Serial.println(F("OK (pull-up active)"));
     testsSucceeded++;
   } else {
-    Serial.println("⚠️ Pressed state at startup");
+    Serial.println(F("Pressed at startup"));
   }
   
-  Serial.print("6. Status LED... ");
+  Serial.print(F("6. Status LED... "));
   digitalWrite(STATUS_LED, HIGH);
   delay(200);
   digitalWrite(STATUS_LED, LOW);
-  Serial.println("✅ OK");
+  Serial.println(F("OK"));
   testsSucceeded++;
   
-  Serial.print("7. EEPROM... ");
+  Serial.print(F("7. EEPROM... "));
   int testValue = EEPROM.read(THRESHOLD_EEPROM_ADDR);
   if (testValue >= 0 && testValue <= 255) {
     lightThreshold = testValue | (EEPROM.read(THRESHOLD_EEPROM_ADDR + 1) << 8);
-    if (lightThreshold == 0) lightThreshold = 300; // Default value
-    Serial.println("✅ OK");
+    if (lightThreshold == 0) lightThreshold = 300;
+    Serial.println(F("OK"));
     testsSucceeded++;
   } else {
-    Serial.println("⚠️ Initialization");
+    Serial.println(F("Init"));
   }
   
-  Serial.println("");
-  Serial.print("📊 Initialization: ");
+  Serial.println();
+  Serial.print(F("Init: "));
   Serial.print(testsSucceeded);
-  Serial.print(" OK, ");
+  Serial.print(F(" OK, "));
   Serial.print(testsFailed);
-  Serial.println(" failures");
+  Serial.println(F(" failures"));
   
   if (testsFailed == 0) {
-    Serial.println("✅ SYSTEM FULLY FUNCTIONAL");
+    Serial.println(F("SYSTEM FULLY FUNCTIONAL"));
     systemInitialized = true;
+
+    Serial.println();
+    Serial.println(F("COMMANDS:"));
+    Serial.println(F("- Short press: Actions/navigation"));
+    Serial.println(F("- Long press: Settings mode"));
+    Serial.println(F("- Double-click: Special actions"));
+    Serial.println();
+    Serial.println(F("NAVIGATION:"));
+    Serial.println(F("Normal -> Hour -> Minute -> Threshold -> Test -> Normal"));
+    Serial.println(F("Auto test: Long press through all modes"));
+    Serial.println();
   } else {
-    Serial.print("⚠️ Problems detected: ");
-    Serial.println(lastProblem);
+    Serial.println(F("Problems detected"));
   }
-  
-  Serial.println("");
-  Serial.println("📋 AVAILABLE INTEGRATION TESTS:");
-  Serial.println("- Normal navigation: Short button = actions");
-  Serial.println("- Settings mode: Long button = settings");
-  Serial.println("- Automatic test: Special mode via menu");
-  Serial.println("");
-  Serial.println("🎮 COMMANDS:");
-  Serial.println("- Short press: Actions/navigation");
-  Serial.println("- Long press: Settings mode");
-  Serial.println("- Double-click: Special actions");
-  Serial.println("");
   
   lcd.clear();
   lcd.setCursor(0, 0);
   if (systemInitialized) {
-    lcd.print("System OK!");
+    lcd.print(F("System OK!"));
   } else {
-    lcd.print("Problems detected");
+    lcd.print(F("Problems detected"));
   }
   
   delay(2000);
-  completeTestStart = millis();
 }
 
 void loop() {
@@ -256,15 +241,12 @@ void loop() {
   delay(50);
 }
 
-/*
- * Multi-function button management
- */
 void handleButton() {
   bool buttonState = digitalRead(BUTTON_PIN);
   
   // Press start detection
   if (!buttonPressed && buttonState == LOW) {
-    delay(20); // Debounce
+    delay(20);
     if (digitalRead(BUTTON_PIN) == LOW) {
       buttonPressed = true;
       pressStart = millis();
@@ -274,7 +256,7 @@ void handleButton() {
   
   // Release detection
   if (buttonPressed && buttonState == HIGH) {
-    delay(20); // Debounce
+    delay(20);
     if (digitalRead(BUTTON_PIN) == HIGH) {
       buttonPressed = false;
       unsigned long pressDuration = millis() - pressStart;
@@ -302,22 +284,17 @@ void handleButton() {
   }
 }
 
-/*
- * Short press management
- */
 void handleShortPress() {
-  Serial.print("🔘 Short press - Mode: ");
+  Serial.print(F("Short press - Mode: "));
   Serial.println(currentMode);
   
   switch (currentMode) {
     case MODE_NORMAL:
-      // Simple output test
-      Serial.println("   → LED + motor test");
+      Serial.println(F("   -> LED + motor test"));
       digitalWrite(STATUS_LED, HIGH);
       delay(100);
       digitalWrite(STATUS_LED, LOW);
       
-      // Very short motor test (safety)
       digitalWrite(MOTOR_PIN1, HIGH);
       digitalWrite(MOTOR_PIN2, LOW);
       delay(200);
@@ -326,94 +303,84 @@ void handleShortPress() {
       break;
       
     case MODE_SET_HOUR:
-      // Increment hour
       if (systemInitialized) {
         DateTime now = rtc.now();
         int newHour = (now.hour() + 1) % 24;
         rtc.adjust(DateTime(now.year(), now.month(), now.day(), 
                            newHour, now.minute(), 0));
-        Serial.print("   → Hour: ");
+        Serial.print(F("   -> Hour: "));
         Serial.println(newHour);
       }
       settingsModeStart = millis();
       break;
       
     case MODE_SET_MINUTE:
-      // Increment minute
       if (systemInitialized) {
         DateTime now = rtc.now();
         int newMinute = (now.minute() + 1) % 60;
         rtc.adjust(DateTime(now.year(), now.month(), now.day(), 
                            now.hour(), newMinute, 0));
-        Serial.print("   → Minute: ");
+        Serial.print(F("   -> Minute: "));
         Serial.println(newMinute);
       }
       settingsModeStart = millis();
       break;
       
     case MODE_SET_THRESHOLD:
-      // Increase threshold
       lightThreshold = min(1023, lightThreshold + 10);
       saveThreshold();
-      Serial.print("   → Threshold: ");
+      Serial.print(F("   -> Threshold: "));
       Serial.println(lightThreshold);
       settingsModeStart = millis();
       break;
       
     case MODE_SYSTEM_TEST:
-      // Move to next phase
       completeTestPhase++;
-      Serial.print("   → Test phase: ");
+      Serial.print(F("   -> Test phase: "));
       Serial.println(completeTestPhase);
       break;
   }
 }
 
-/*
- * Double-click management
- */
 void handleDoubleClick() {
-  Serial.println("🔄 Double-click");
+  Serial.println(F("Double-click"));
   
   if (currentMode == MODE_SET_THRESHOLD) {
     lightThreshold = max(0, lightThreshold - 10);
     saveThreshold();
-    Serial.print("   → Threshold decreased: ");
+    Serial.print(F("   -> Threshold decreased: "));
     Serial.println(lightThreshold);
     settingsModeStart = millis();
   }
 }
 
-/*
- * Long press management
- */
 void handleLongPress() {
-  Serial.print("⏱️ Long press - Transition: ");
+  Serial.print(F("Long press - Transition: "));
   Serial.print(currentMode);
   
   switch (currentMode) {
     case MODE_NORMAL:
       currentMode = MODE_SET_HOUR;
-      Serial.println(" → SET_HOUR");
+      Serial.println(F(" -> SET_HOUR"));
       break;
     case MODE_SET_HOUR:
       currentMode = MODE_SET_MINUTE;
-      Serial.println(" → SET_MINUTE");
+      Serial.println(F(" -> SET_MINUTE"));
       break;
     case MODE_SET_MINUTE:
       currentMode = MODE_SET_THRESHOLD;
-      Serial.println(" → SET_THRESHOLD");
+      Serial.println(F(" -> SET_THRESHOLD"));
       break;
     case MODE_SET_THRESHOLD:
       currentMode = MODE_SYSTEM_TEST;
       testInProgress = true;
       completeTestPhase = 0;
-      Serial.println(" → SYSTEM_TEST");
+      Serial.println(F(" -> SYSTEM_TEST"));
       break;
     case MODE_SYSTEM_TEST:
       currentMode = MODE_NORMAL;
       testInProgress = false;
-      Serial.println(" → NORMAL");
+      Serial.println(F(" -> NORMAL"));
       break;
   }
   
@@ -421,154 +388,145 @@ void handleLongPress() {
   pressProcessed = true;
 }
 
-/*
- * LCD display management
- */
 void handleDisplay() {
   lcd.setCursor(0, 0);
   
   switch (currentMode) {
     case MODE_NORMAL:
-      // Line 1: Time or status
       if (systemInitialized) {
         DateTime now = rtc.now();
-        if (now.hour() < 10) lcd.print("0");
+        if (now.hour() < 10) lcd.print(F("0"));
         lcd.print(now.hour());
-        lcd.print(":");
-        if (now.minute() < 10) lcd.print("0");
+        lcd.print(F(":"));
+        if (now.minute() < 10) lcd.print(F("0"));
         lcd.print(now.minute());
-        lcd.print("      ");
+        lcd.print(F("      "));
       } else {
-        lcd.print("System KO      ");
+        lcd.print(F("System KO      "));
       }
       
-      // Line 2: Sensors
       lcd.setCursor(0, 1);
       int light = analogRead(LIGHT_SENSOR);
       bool top = digitalRead(TOP_LIMIT_SWITCH);
       bool bottom = digitalRead(BOTTOM_LIMIT_SWITCH);
       
-      lcd.print("L:");
-      if (light < 100) lcd.print("  ");
-      else if (light < 1000) lcd.print(" ");
+      lcd.print(F("L:"));
+      if (light < 100) lcd.print(F("  "));
+      else if (light < 1000) lcd.print(F(" "));
       lcd.print(light);
-      lcd.print(" T:");
-      lcd.print(top ? "0" : "1");
-      lcd.print(" B:");
-      lcd.print(bottom ? "0" : "1");
-      lcd.print("   ");
+      lcd.print(F(" T:"));
+      lcd.print(top ? F("0") : F("1"));
+      lcd.print(F(" B:"));
+      lcd.print(bottom ? F("0") : F("1"));
+      lcd.print(F("   "));
       break;
       
     case MODE_SET_HOUR:
       if (systemInitialized) {
         DateTime now = rtc.now();
         if (blinking) {
-          lcd.print("  :");
+          lcd.print(F("  :"));
         } else {
-          if (now.hour() < 10) lcd.print("0");
+          if (now.hour() < 10) lcd.print(F("0"));
           lcd.print(now.hour());
-          lcd.print(":");
+          lcd.print(F(":"));
         }
-        if (now.minute() < 10) lcd.print("0");
+        if (now.minute() < 10) lcd.print(F("0"));
         lcd.print(now.minute());
-        lcd.print("      ");
+        lcd.print(F("      "));
       } else {
-        lcd.print("RTC not available");
+        lcd.print(F("RTC not available"));
       }
       
       lcd.setCursor(0, 1);
-      lcd.print("Set hour        ");
+      lcd.print(F("Set hour        "));
       break;
       
     case MODE_SET_MINUTE:
       if (systemInitialized) {
         DateTime now = rtc.now();
-        if (now.hour() < 10) lcd.print("0");
+        if (now.hour() < 10) lcd.print(F("0"));
         lcd.print(now.hour());
-        lcd.print(":");
+        lcd.print(F(":"));
         if (blinking) {
-          lcd.print("  ");
+          lcd.print(F("  "));
         } else {
-          if (now.minute() < 10) lcd.print("0");
+          if (now.minute() < 10) lcd.print(F("0"));
           lcd.print(now.minute());
         }
-        lcd.print("      ");
+        lcd.print(F("      "));
       } else {
-        lcd.print("RTC not available");
+        lcd.print(F("RTC not available"));
       }
       
       lcd.setCursor(0, 1);
-      lcd.print("Set minute      ");
+      lcd.print(F("Set minute      "));
       break;
       
     case MODE_SET_THRESHOLD:
-      lcd.print("Threshold: ");
+      lcd.print(F("Threshold: "));
       lcd.print(lightThreshold);
-      lcd.print("     ");
+      lcd.print(F("     "));
       
       lcd.setCursor(0, 1);
       int currentValue = analogRead(LIGHT_SENSOR);
-      lcd.print("Current: ");
+      lcd.print(F("Current: "));
       lcd.print(currentValue);
-      lcd.print("     ");
+      lcd.print(F("     "));
       break;
       
     case MODE_SYSTEM_TEST:
-      lcd.print("Auto test ");
+      lcd.print(F("Auto test "));
       lcd.print(completeTestPhase);
-      lcd.print("/5   ");
+      lcd.print(F("/5   "));
       
       lcd.setCursor(0, 1);
       switch (completeTestPhase) {
-        case 0: lcd.print("Ready to test   "); break;
-        case 1: lcd.print("Test sensors    "); break;
-        case 2: lcd.print("Test motor      "); break;
-        case 3: lcd.print("Test LED        "); break;
-        case 4: lcd.print("Test EEPROM     "); break;
-        case 5: lcd.print("Test complete!  "); break;
-        default: lcd.print("Unknown phase   "); break;
+        case 0: lcd.print(F("Ready to test   ")); break;
+        case 1: lcd.print(F("Test sensors    ")); break;
+        case 2: lcd.print(F("Test motor      ")); break;
+        case 3: lcd.print(F("Test LED        ")); break;
+        case 4: lcd.print(F("Test EEPROM     ")); break;
+        case 5: lcd.print(F("Test complete!  ")); break;
+        default: lcd.print(F("Unknown phase   ")); break;
       }
       break;
   }
 }
 
-/*
- * Automatic system test
- */
 void executeAutomaticTest() {
   static unsigned long lastTest = 0;
   
-  if (millis() - lastTest < 2000) return; // Tests every 2s
+  if (millis() - lastTest < 2000) return;
   lastTest = millis();
   
   switch (completeTestPhase) {
-    case 1: // Sensor test
+    case 1:
       {
-        Serial.println("🧪 Automatic sensor test");
+        Serial.println(F("Auto sensor test"));
         int light = analogRead(LIGHT_SENSOR);
         bool top = digitalRead(TOP_LIMIT_SWITCH);
         bool bottom = digitalRead(BOTTOM_LIMIT_SWITCH);
         
-        Serial.print("   Light: ");
+        Serial.print(F("   Light: "));
         Serial.print(light);
-        Serial.print(", Top: ");
-        Serial.print(top ? "Free" : "Pressed");
-        Serial.print(", Bottom: ");
-        Serial.println(bottom ? "Free" : "Pressed");
+        Serial.print(F(", Top: "));
+        Serial.print(top ? F("Free") : F("Pressed"));
+        Serial.print(F(", Bottom: "));
+        Serial.println(bottom ? F("Free") : F("Pressed"));
         
         if (light > 0 && light < 1023) {
           testsSucceeded++;
-          Serial.println("   ✅ Sensors OK");
+          Serial.println(F("   Sensors OK"));
         } else {
           testsFailed++;
-          Serial.println("   ⚠️ Sensor edge values");
+          Serial.println(F("   Sensor edge values"));
         }
       }
       break;
       
-    case 2: // Motor test
-      Serial.println("🧪 Automatic motor test");
-      // Very short test for safety
+    case 2:
+      Serial.println(F("Auto motor test"));
       digitalWrite(MOTOR_PIN1, HIGH);
       digitalWrite(MOTOR_PIN2, LOW);
       delay(300);
@@ -577,66 +535,56 @@ void executeAutomaticTest() {
       delay(300);
       digitalWrite(MOTOR_PIN1, LOW);
       digitalWrite(MOTOR_PIN2, LOW);
-      Serial.println("   ✅ Motor commands OK");
+      Serial.println(F("   Motor commands OK"));
       testsSucceeded++;
       break;
       
-    case 3: // LED test
-      Serial.println("🧪 Automatic LED test");
+    case 3:
+      Serial.println(F("Auto LED test"));
       for (int i = 0; i < 3; i++) {
         digitalWrite(STATUS_LED, HIGH);
         delay(200);
         digitalWrite(STATUS_LED, LOW);
         delay(200);
       }
-      Serial.println("   ✅ LED OK");
+      Serial.println(F("   LED OK"));
       testsSucceeded++;
       break;
       
-    case 4: // EEPROM test
-      Serial.println("🧪 Automatic EEPROM test");
+    case 4:
+      Serial.println(F("Auto EEPROM test"));
       int testValue = lightThreshold + 1;
       EEPROM.write(100, testValue & 0xFF);
       delay(10);
       int readValue = EEPROM.read(100);
       if (readValue == (testValue & 0xFF)) {
-        Serial.println("   ✅ EEPROM OK");
+        Serial.println(F("   EEPROM OK"));
         testsSucceeded++;
       } else {
-        Serial.println("   ❌ EEPROM defective");
+        Serial.println(F("   EEPROM defective"));
         testsFailed++;
       }
       break;
       
-    case 5: // Final results
-      Serial.println("");
-      Serial.println("============================================");
-      Serial.println("🎯 COMPLETE TEST FINISHED");
-      Serial.println("============================================");
-      Serial.println("");
-      Serial.print("📊 Results: ");
+    case 5:
+      Serial.println();
+      Serial.println(F("TEST FINISHED"));
+      Serial.print(F("Results: "));
       Serial.print(testsSucceeded);
-      Serial.print(" successes, ");
+      Serial.print(F(" successes, "));
       Serial.print(testsFailed);
-      Serial.println(" failures");
-      Serial.println("");
+      Serial.println(F(" failures"));
       
       if (testsFailed == 0) {
-        Serial.println("✅ SYSTEM FULLY VALIDATED");
-        Serial.println("🎉 Ready for final deployment!");
+        Serial.println(F("SYSTEM FULLY VALIDATED"));
       } else {
-        Serial.println("⚠️ Some problems detected");
-        Serial.println("📋 Review defective components");
+        Serial.println(F("Some problems detected"));
       }
-      Serial.println("");
-      Serial.println("➡️ Long press to return to normal mode");
+      Serial.println(F("Long press to return to normal"));
       break;
   }
 }
 
-/*
- * Save threshold to EEPROM
- */
 void saveThreshold() {
   EEPROM.write(THRESHOLD_EEPROM_ADDR, lightThreshold & 0xFF);
   EEPROM.write(THRESHOLD_EEPROM_ADDR + 1, (lightThreshold >> 8) & 0xFF);
@@ -644,64 +592,17 @@ void saveThreshold() {
 
 /*
  * ============================================================================
- * COMPLETE SYSTEM DIAGNOSTICS
+ * MEMORY OPTIMIZATION NOTES
  * ============================================================================
  * 
- * ❌ "RTC not detected":
- *    - Check I2C wiring: SDA→A4, SCL→A5
- *    - Check RTC power: VCC→5V, GND→GND
- *    - I2C address conflict with LCD (rare)
- *    - Defective RTC module
- * 
- * ❌ Unresponsive button interface:
- *    - Defective or poorly wired button
- *    - Pin D5 used by other component
- *    - Internal pull-up defective
- *    - Excessive bouncing (add capacitor)
- * 
- * ❌ LCD displays incorrect characters:
- *    - I2C address conflict (I2C scanner)
- *    - Unstable power supply
- *    - Defective I2C wiring
- *    - Defective LCD module
- * 
- * ❌ Sensors aberrant values:
- *    - Light sensor: check resistive divider
- *    - Limit switches: check pull-up and NO/NC wiring
- *    - Electromagnetic interference
- *    - Noisy power supply
- * 
- * ❌ Motor doesn't respond to commands:
- *    - L298N not powered with 12V
- *    - Motor connections reversed or disconnected
- *    - Defective L298N (overheating)
- *    - Defective Arduino pins D6/D7
- * 
- * ❌ EEPROM doesn't save:
- *    - Defective Arduino Nano (rare)
- *    - Power cut during write
- *    - EEPROM wear (>100000 cycles)
- *    - Corrupted memory address
- * 
- * ❌ Unstable system/random resets:
- *    - Insufficient or unstable power supply
- *    - Motor interference (missing capacitors)
- *    - Intermittent short circuit
- *    - Arduino watchdog (blocked code)
- * 
- * 🔧 Complete validation tests:
- *    - All modules detected at initialization
- *    - 100% responsive user interface
- *    - Sensors give coherent values
- *    - Actuators respond to commands
- *    - Parameters saved and reloaded
- *    - No reset or freeze during 15 minutes
- * 
- * 📊 Success criteria:
- *    - Initialization: 6/7 modules OK minimum
- *    - Automatic tests: <20% failures
- *    - Stability: Continuous operation >15min
- *    - Interface: Smooth navigation between all modes
+ * This version optimizes RAM usage by:
+ * - Using F() macro for string literals (stored in flash, not RAM)
+ * - Shorter variable names and reduced string constants
+ * - Consolidated error messages
+ * - Removed lengthy instruction texts
+ * - Using byte instead of int for counters where possible
+ * - Target: Keep >200 bytes free for stable operation
+ * - Arduino Nano total RAM: 2048 bytes
  * 
  * ============================================================================
  */

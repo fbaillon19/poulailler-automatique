@@ -93,6 +93,14 @@ GND     →   GND
             +12V    ←                ← 12V Supply +
             GND     ←                ← 12V Supply -
 ```
+⚠️ IMPORTANT: Remove the 5V regulator jumper on the L298N
+- Located behind the power terminal block (3 pins)
+- Without removing it, 12V drops to ~7V
+- External 5V supply required when jumper removed
+
+Connections:
+Arduino 5V → L298N +5V (logic) - AFTER removing jumper
+12V Supply → L298N +12V (motor power)
 
 ## ⚡ Power Supply Schematic
 

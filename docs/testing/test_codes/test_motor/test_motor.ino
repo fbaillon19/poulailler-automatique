@@ -21,6 +21,12 @@
  * L298N OUT2 → Motor -
  * L298N +12V → 12V Power Supply
  * L298N +5V → Arduino 5V
+ * L298N GND → Arduino + Power Supply GND
+ *
+ * ⚠️ L298N Setup Required:
+ * - Remove the 5V regulator jumper (behind power terminal)
+ * - Connect external 5V to L298N logic supply
+ * - Failure to do this results in ~7V instead of 12V to motor
  * 
  * Procedure:
  * 1. Upload this code to Arduino Nano
@@ -53,32 +59,38 @@ int direction2Tests = 0;
 
 void setup() {
   Serial.begin(9600);
+  delay(1000);
+  
+  Serial.println(F("============================================"));
+  Serial.println(F("MOTOR TEST - Automatic Chicken Coop"));
+  Serial.println(F("============================================"));
+  Serial.println(F("Version: 1.0"));
+  Serial.println(F("Test: 5.1 - L298N Motor Control"));
+  Serial.println();
+
+  Serial.println(F("SAFETY:"));
+  Serial.println(F("- Motor DISCONNECTED from mechanism"));
+  Serial.println(F("- Tests limited to 3s max"));
+  Serial.println(F("- RESET for emergency stop"));
+  Serial.println();
+  
+  Serial.println(F("PROCEDURE:"));
+  Serial.println(F("Phase 1: Voltage test (motor OFF)"));
+  Serial.println(F("Phase 2: Short rotation tests")); 
+  Serial.println(F("Phase 3: Validation"));
+  Serial.println();
   
   pinMode(MOTOR_PIN1, OUTPUT);
   pinMode(MOTOR_PIN2, OUTPUT);
   stopMotor(); // SAFETY
   
-  Serial.println("=== MOTOR TEST - Lite Version ===");
-  Serial.println();
-  Serial.println("SAFETY:");
-  Serial.println("- Motor DISCONNECTED from mechanism");
-  Serial.println("- Tests limited to 3s max");
-  Serial.println("- RESET for emergency stop");
-  Serial.println();
-  
-  Serial.println("PROCEDURE:");
-  Serial.println("Phase 1: Voltage test (motor OFF)");
-  Serial.println("Phase 2: Short rotation tests"); 
-  Serial.println("Phase 3: Validation");
-  Serial.println();
-  
-  Serial.println("STARTING in 5s...");
+  Serial.println(F("STARTING in 5s..."));
   for (int i = 5; i > 0; i--) {
     Serial.print(i);
-    Serial.print("... ");
+    Serial.print(F("... "));
     delay(1000);
   }
-  Serial.println("START");
+  Serial.println(F("START"));
   Serial.println();
   
   testStart = millis();
@@ -89,7 +101,7 @@ void loop() {
   // Safety: auto stop after 10min
   if (millis() - testStart > 600000) {
     stopMotor();
-    Serial.println("AUTO STOP: Safety timeout");
+    Serial.println(F("AUTO STOP: Safety timeout"));
     while(true) delay(1000);
   }
   
@@ -115,22 +127,22 @@ void testVoltages() {
     digitalWrite(MOTOR_PIN1, HIGH);
     digitalWrite(MOTOR_PIN2, LOW);
     if (t % 1000 == 0) {
-      Serial.println("Test direction 1: D7=HIGH, D6=LOW");
-      Serial.println("-> Measure 12V between OUT1-OUT2");
+      Serial.println(F("Test direction 1: D7=HIGH, D6=LOW"));
+      Serial.println(F("-> Measure 12V between OUT1-OUT2"));
     }
   } else if (t < 10000) {
     // Test direction 2
     digitalWrite(MOTOR_PIN1, LOW);
     digitalWrite(MOTOR_PIN2, HIGH);
     if ((t-5000) % 1000 == 0) {
-      Serial.println("Test direction 2: D7=LOW, D6=HIGH");
-      Serial.println("-> Measure -12V between OUT1-OUT2");
+      Serial.println(F("Test direction 2: D7=LOW, D6=HIGH"));
+      Serial.println(F("-> Measure -12V between OUT1-OUT2"));
     }
   } else {
     stopMotor();
-    Serial.println("Voltage test OK");
-    Serial.println("CONNECT MOTOR now");
-    Serial.println("Waiting 10s...");
+    Serial.println(F("Voltage test OK"));
+    Serial.println(F("CONNECT MOTOR now"));
+    Serial.println(F("Waiting 10s..."));
     delay(10000);
     
     testPhase++;
@@ -142,7 +154,7 @@ void testDirection1() {
   unsigned long t = millis() - phaseStart;
   
   if (t == 0) {
-    Serial.println("Phase 2: DIRECTION 1 rotation test");
+    Serial.println(F("Phase 2: DIRECTION 1 rotation test"));
   }
   
   if (t < TEST_DURATION) {
@@ -150,15 +162,15 @@ void testDirection1() {
     digitalWrite(MOTOR_PIN2, LOW);
     
     if (t % 1000 == 0) {
-      Serial.print("Direction 1 active - ");
+      Serial.print(F("Direction 1 active - "));
       Serial.print((TEST_DURATION - t) / 1000);
-      Serial.println("s");
+      Serial.println(F("s"));
     }
   } else {
     stopMotor();
     direction1Tests++;
-    Serial.println("STOP direction 1");
-    Serial.println("Observe: rotation direction");
+    Serial.println(F("STOP direction 1"));
+    Serial.println(F("Observe: rotation direction"));
     Serial.println();
     
     testPhase++;
@@ -170,7 +182,7 @@ void testDirection2() {
   unsigned long t = millis() - phaseStart;
   
   if (t == 0) {
-    Serial.println("Phase 4: DIRECTION 2 rotation test");
+    Serial.println(F("Phase 4: DIRECTION 2 rotation test"));
   }
   
   if (t < TEST_DURATION) {
@@ -178,15 +190,15 @@ void testDirection2() {
     digitalWrite(MOTOR_PIN2, HIGH);
     
     if (t % 1000 == 0) {
-      Serial.print("Direction 2 active - ");
+      Serial.print(F("Direction 2 active - "));
       Serial.print((TEST_DURATION - t) / 1000);
-      Serial.println("s");
+      Serial.println(F("s"));
     }
   } else {
     stopMotor();
     direction2Tests++;
-    Serial.println("STOP direction 2");
-    Serial.println("Observe: opposite direction");
+    Serial.println(F("STOP direction 2"));
+    Serial.println(F("Observe: opposite direction"));
     Serial.println();
     
     testPhase++;
@@ -199,9 +211,9 @@ void safetyPause() {
   unsigned long t = millis() - phaseStart;
   
   if (!msgDisplayed) {
-    Serial.print("Safety pause ");
+    Serial.print(F("Safety pause "));
     Serial.print(PAUSE / 1000);
-    Serial.println("s");
+    Serial.println(F("s"));
     msgDisplayed = true;
   }
   
@@ -219,7 +231,7 @@ void testAlternation() {
   unsigned long t = millis() - phaseStart;
   
   if (t == 0) {
-    Serial.println("Phase 6: Fast alternation (4 cycles)");
+    Serial.println(F("Phase 6: Fast alternation (4 cycles)"));
     cycles = 0;
     lastChange = millis();
   }
@@ -228,15 +240,15 @@ void testAlternation() {
     if (direction) {
       digitalWrite(MOTOR_PIN1, HIGH);
       digitalWrite(MOTOR_PIN2, LOW);
-      Serial.print("Cycle ");
+      Serial.print(F("Cycle "));
       Serial.print(cycles/2 + 1);
-      Serial.println(" - Direction 1");
+      Serial.println(F(" - Direction 1"));
     } else {
       digitalWrite(MOTOR_PIN1, LOW);
       digitalWrite(MOTOR_PIN2, HIGH);
-      Serial.print("Cycle ");
+      Serial.print(F("Cycle "));
       Serial.print(cycles/2 + 1);
-      Serial.println(" - Direction 2");
+      Serial.println(F(" - Direction 2"));
     }
     
     direction = !direction;
@@ -244,7 +256,7 @@ void testAlternation() {
     cycles++;
   } else if (cycles >= 8) {
     stopMotor();
-    Serial.println("End alternation");
+    Serial.println(F("End alternation"));
     Serial.println();
     
     testPhase++;
@@ -258,24 +270,25 @@ void finalValidation() {
   if (!done) {
     stopMotor();
     
-    Serial.println("=== FINAL VALIDATION ===");
-    Serial.print("Direction 1 tests: ");
+    Serial.println(F("=== FINAL VALIDATION ==="));
+    Serial.print(F("Direction 1 tests: "));
     Serial.println(direction1Tests);
-    Serial.print("Direction 2 tests: ");
+    Serial.print(F("Direction 2 tests: "));
     Serial.println(direction2Tests);
-    Serial.println("Alternations: 4 cycles");
+    Serial.println(F("Alternations: 4 cycles"));
     Serial.println();
     
-    Serial.println("VERIFICATIONS:");
-    Serial.println("- Motor turns 2 directions: OK");
-    Serial.println("- Opposite directions: OK");
-    Serial.println("- Clean stops: OK");
-    Serial.println("- No abnormal noise: OK");
-    Serial.println("- L298N not hot: OK");
+    Serial.println(F("VERIFICATIONS:"));
+    Serial.println(F("- Motor turns 2 directions : OK"));
+    Serial.println(F("- Opposite directions : OK"));
+    Serial.println(F("- Clean stops : OK"));
+    Serial.println(F("- No abnormal noise : OK"));
+    Serial.println(F("- L298N not hot : OK"));
     Serial.println();
     
-    Serial.println("MOTOR CONTROL: OK");
-    Serial.println("-> Ready next test");
+    Serial.println(F("MOTOR CONTROL : OK"));
+    Serial.println();
+    Serial.println(F("-> Ready next test"));
     Serial.println();
     
     done = true;
@@ -287,7 +300,7 @@ void continuousMonitoring() {
   static unsigned long lastTest = 0;
   
   if (millis() - lastTest > 10000) {
-    Serial.println("Monitoring test: 1s each direction");
+    Serial.println(F("Monitoring test: 1s each direction"));
     
     // Direction 1
     digitalWrite(MOTOR_PIN1, HIGH);
@@ -303,7 +316,7 @@ void continuousMonitoring() {
     delay(1000);
     
     stopMotor();
-    Serial.println("Monitoring OK");
+    Serial.println(F("Monitoring OK"));
     Serial.println();
     
     lastTest = millis();

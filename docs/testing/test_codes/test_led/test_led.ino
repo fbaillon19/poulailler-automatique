@@ -47,12 +47,12 @@ void setup() {
   Serial.begin(9600);
   delay(1000);
   
-  Serial.println("============================================");
-  Serial.println("STATUS LED TEST - Automatic Chicken Coop");
-  Serial.println("============================================");
-  Serial.println("Version: 1.0");
-  Serial.println("Test: 4.1 - Status LED Blinking");
-  Serial.println("");
+  Serial.println(F("============================================"));
+  Serial.println(F("STATUS LED TEST - Automatic Chicken Coop"));
+  Serial.println(F("============================================"));
+  Serial.println(F("Version: 1.0"));
+  Serial.println(F("Test: 4.1 - Status LED Blinking"));
+  Serial.println();
   
   // LED configuration
   pinMode(STATUS_LED, OUTPUT);
@@ -60,24 +60,24 @@ void setup() {
   // Initial test - LED off
   digitalWrite(STATUS_LED, LOW);
   
-  Serial.println("💡 LED Configuration:");
-  Serial.println("- Pin used: D3");
-  Serial.println("- Resistor: 220Ω (mandatory)");
-  Serial.println("- Polarity: Anode via resistor, Cathode to GND");
-  Serial.println("");
+  Serial.println(F("💡 LED Configuration:"));
+  Serial.println(F("- Pin used: D3"));
+  Serial.println(F("- Resistor: 220Ω (mandatory)"));
+  Serial.println(F("- Polarity: Anode via resistor, Cathode to GND"));
+  Serial.println();
   
-  Serial.println("👀 WATCH THE LED during test:");
-  Serial.println("Serial monitor is optional");
-  Serial.println("");
+  Serial.println(F("👀 WATCH THE LED during test:"));
+  Serial.println(F("Serial monitor is optional"));
+  Serial.println();
   
-  Serial.println("🕐 Test sequences (3 minutes):");
-  Serial.println("1. Basic ON/OFF test");
-  Serial.println("2. Slow blinking (1s)");
-  Serial.println("3. Normal blinking (500ms)");
-  Serial.println("4. Fast blinking (200ms)");
-  Serial.println("5. SOS pattern (... --- ...)");
-  Serial.println("6. Final continuous blinking");
-  Serial.println("");
+  Serial.println(F("🕐 Test sequences (3 minutes):"));
+  Serial.println(F("1. Basic ON/OFF test"));
+  Serial.println(F("2. Slow blinking (1s)"));
+  Serial.println(F("3. Normal blinking (500ms)"));
+  Serial.println(F("4. Fast blinking (200ms)"));
+  Serial.println(F("5. SOS pattern (... --- ...)"));
+  Serial.println(F("6. Final continuous blinking"));
+  Serial.println();
   
   testStart = millis();
   phaseStart = millis();
@@ -96,34 +96,34 @@ void loop() {
     if (testPhase != 2) {
       testPhase = 2;
       phaseStart = millis();
-      Serial.println("Phase 2: Slow blinking (1000ms)");
+      Serial.println(F("Phase 2: Slow blinking (1000ms)"));
     }
     blinkWithPeriod(1000);
   } else if (elapsedTime < 90000) { // 60-90s: Normal blinking
     if (testPhase != 3) {
       testPhase = 3;
       phaseStart = millis();
-      Serial.println("Phase 3: Normal blinking (500ms)");
+      Serial.println(F("Phase 3: Normal blinking (500ms)"));
     }
     blinkWithPeriod(500);
   } else if (elapsedTime < 120000) { // 90-120s: Fast blinking
     if (testPhase != 4) {
       testPhase = 4;
       phaseStart = millis();
-      Serial.println("Phase 4: Fast blinking (200ms)");
+      Serial.println(F("Phase 4: Fast blinking (200ms)"));
     }
     blinkWithPeriod(200);
   } else if (elapsedTime < 150000) { // 120-150s: SOS pattern
     if (testPhase != 5) {
       testPhase = 5;
       phaseStart = millis();
-      Serial.println("Phase 5: SOS pattern (... --- ...)");
+      Serial.println(F("Phase 5: SOS pattern (... --- ...)"));
     }
     sosPattern();
   } else { // 150s+: Final test
     if (testPhase != 6) {
       testPhase = 6;
-      Serial.println("Phase 6: Final test - Continuous blinking");
+      Serial.println(F("Phase 6: Final test - Continuous blinking"));
       displayFinalResults();
     }
     blinkWithPeriod(500);
@@ -142,8 +142,8 @@ void testOnOff() {
     // 0-5s: LED permanently on
     if (!ledState) {
       digitalWrite(STATUS_LED, LOW);
-      ledState = false;
-      Serial.println("Phase 1b: LED OFF (5 seconds)");
+      ledState = true;
+      Serial.println(F("Phase 1b: LED OFF (5 seconds)"));
     }
   } else if (phaseTime < 30000) {
     // 10-30s: Slow alternation ON/OFF every 2 seconds
@@ -154,8 +154,8 @@ void testOnOff() {
       
       static int counter = 0;
       if (counter % 4 == 0) {
-        Serial.print("Phase 1c: Slow alternation ");
-        Serial.println(ledState ? "ON" : "OFF");
+        Serial.print(F("Phase 1c: Slow alternation "));
+        Serial.println(ledState ? F("ON") : F("OFF"));
       }
       counter++;
     }
@@ -174,10 +174,10 @@ void blinkWithPeriod(unsigned long period) {
     // Occasional log to avoid spam
     static unsigned long lastLog = 0;
     if (millis() - lastLog > 5000) {
-      Serial.print("Blinking ");
+      Serial.print(F("Blinking "));
       Serial.print(period);
-      Serial.print("ms - State: ");
-      Serial.println(ledState ? "ON" : "OFF");
+      Serial.print(F("ms - State: "));
+      Serial.println(ledState ? F("ON") : F("OFF"));
       lastLog = millis();
     }
   }
@@ -196,7 +196,7 @@ void sosPattern() {
     firstPass = false;
     sosStep = 0;
     digitalWrite(STATUS_LED, LOW);
-    Serial.println("Starting SOS pattern");
+    Serial.println(F("Starting SOS pattern"));
   }
   
   unsigned long stepTime = millis() - stepStart;
@@ -274,7 +274,7 @@ void sosPattern() {
       if (stepTime >= 1000) {
         sosStep = 0;
         stepStart = millis();
-        Serial.println("SOS repeated");
+        Serial.println(F("SOS repeated"));
       }
       break;
   }
@@ -284,42 +284,42 @@ void sosPattern() {
  * Function: Display final results
  */
 void displayFinalResults() {
-  Serial.println("");
-  Serial.println("============================================");
-  Serial.println("✅ LED TEST COMPLETED SUCCESSFULLY");
-  Serial.println("============================================");
-  Serial.println("");
+  Serial.println();
+  Serial.println(F("============================================"));
+  Serial.println(F("✅ LED TEST COMPLETED SUCCESSFULLY"));
+  Serial.println(F("============================================"));
+  Serial.println();
   
-  Serial.println("📊 Test results:");
-  Serial.println("");
+  Serial.println(F("📊 Test results:"));
+  Serial.println();
   
-  Serial.println("🧪 TESTED FUNCTIONS:");
-  Serial.println("✅ Basic LED ON/OFF");
-  Serial.println("✅ Slow blinking (1000ms)");
-  Serial.println("✅ Normal blinking (500ms)");
-  Serial.println("✅ Fast blinking (200ms)");
-  Serial.println("✅ Complex pattern (SOS)");
-  Serial.println("✅ Precise timing control");
+  Serial.println(F("🧪 TESTED FUNCTIONS:"));
+  Serial.println(F("✅ Basic LED ON/OFF"));
+  Serial.println(F("✅ Slow blinking (1000ms)"));
+  Serial.println(F("✅ Normal blinking (500ms)"));
+  Serial.println(F("✅ Fast blinking (200ms)"));
+  Serial.println(F("✅ Complex pattern (SOS)"));
+  Serial.println(F("✅ Precise timing control"));
   
-  Serial.println("");
-  Serial.println("🎯 VISUAL VALIDATION:");
-  Serial.println("- LED should be visible and clear");
-  Serial.println("- No parasitic flickering");
-  Serial.println("- Different rhythms distinguishable");
-  Serial.println("- SOS pattern recognizable");
+  Serial.println();
+  Serial.println(F("🎯 VISUAL VALIDATION:"));
+  Serial.println(F("- LED should be visible and clear"));
+  Serial.println(F("- No parasitic flickering"));
+  Serial.println(F("- Different rhythms distinguishable"));
+  Serial.println(F("- SOS pattern recognizable"));
   
-  Serial.println("");
-  Serial.println("⚡ ELECTRICAL CHECKS:");
-  Serial.println("- 220Ω resistor mandatory");
-  Serial.println("- LED current ≈ 15-20mA");
-  Serial.println("- LED voltage ≈ 2-3V");
-  Serial.println("- No excessive heating");
+  Serial.println();
+  Serial.println(F("⚡ ELECTRICAL CHECKS:"));
+  Serial.println(F("- 220Ω resistor mandatory"));
+  Serial.println(F("- LED current ≈ 15-20mA"));
+  Serial.println(F("- LED voltage ≈ 2-3V"));
+  Serial.println(F("- No excessive heating"));
   
-  Serial.println("");
-  Serial.println("✅ STATUS LED FUNCTIONAL");
-  Serial.println("➡️  Ready for next test: Motor control");
-  Serial.println("");
-  Serial.println("🔄 Final test: Continuous 500ms blinking...");
+  Serial.println();
+  Serial.println(F("✅ STATUS LED FUNCTIONAL"));
+  Serial.println(F("➡️  Ready for next test: Motor control"));
+  Serial.println();
+  Serial.println(F("🔄 Final test: Continuous 500ms blinking..."));
 }
 
 /*

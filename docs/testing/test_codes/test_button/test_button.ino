@@ -3,7 +3,7 @@
  * MULTI-FUNCTION BUTTON TEST - Automatic Chicken Coop
  * ============================================================================
  * 
- * Test: 3.3 - Multi-function Button (Lightweight Version)
+ * Test: 3.3 - Multi-function Button
  * Objective: Verify button detection and multi-function capabilities
  * Duration: ~5 minutes
  * 
@@ -53,9 +53,16 @@ unsigned long testCounter = 0;
 
 void setup() {
   Serial.begin(9600);
+
+  Serial.println(F("============================================"));
+  Serial.println(F("MULTI-FUNCTION BUTTON TEST - Automatic Chicken Coop"));
+  Serial.println(F("============================================"));
+  Serial.println(F("Version: 1.0"));
+  Serial.println(F("Test: 3.3 - Multi-function Button"));
+  Serial.println();
+  
   pinMode(BUTTON_PIN, INPUT_PULLUP);
   
-  Serial.println(F("=== MULTI-FUNCTION BUTTON TEST ==="));
   Serial.print(F("Initial state: "));
   Serial.println(digitalRead(BUTTON_PIN) ? F("FREE") : F("PRESSED"));
   Serial.println(F("Instructions:"));
@@ -76,7 +83,8 @@ void loop() {
   }
   
   // Stats every 10s
-  if (testCounter % 10000 == 0) {
+  if (testCounter % 1000 == 0) {
+    Serial.println();
     Serial.print(F("Stats - Short:"));
     Serial.print(shortPresses);
     Serial.print(F(" Long:"));
@@ -88,8 +96,16 @@ void loop() {
   }
   
   // End test after 60s
-  if (testCounter > 600000) {
-    Serial.println(F("\n=== TEST RESULTS ==="));
+  if (testCounter > 6000) {
+    Serial.println();
+    Serial.println(F("============================================"));
+    Serial.println(F("✅ BUTTON TEST COMPLETED"));
+    Serial.println(F("============================================"));
+    Serial.println();
+    
+    Serial.println(F("📊 Test results:"));
+    Serial.println();
+
     Serial.print(F("Short presses: ")); Serial.println(shortPresses);
     Serial.print(F("Long presses: ")); Serial.println(longPresses);
     Serial.print(F("Double-clicks: ")); Serial.println(doubleClicks);
@@ -142,25 +158,23 @@ void handleButton() {
       
       Serial.print(F("<- Release "));
       Serial.print(duration);
-      Serial.print(F("ms"));
+      Serial.println(F("ms"));
       
-      if (!pressProcessed) {
-        if (duration >= LONG_PRESS) {
-          Serial.println(F(" -> LONG"));
-          longPresses++;
-          handleLongPress();
+      if (duration >= LONG_PRESS) {
+        Serial.println(F(" -> LONG"));
+        longPresses++;
+        handleLongPress();
+      } else {
+        Serial.println(F(" -> Short"));
+        
+        if (waitingDoubleClick && (millis() - lastRelease) < DOUBLE_CLICK) {
+          Serial.println(F("DOUBLE-CLICK!"));
+          doubleClicks++;
+          handleDoubleClick();
+          waitingDoubleClick = false;
         } else {
-          Serial.println(F(" -> Short"));
-          
-          if (waitingDoubleClick && (millis() - lastRelease) < DOUBLE_CLICK) {
-            Serial.println(F("DOUBLE-CLICK!"));
-            doubleClicks++;
-            handleDoubleClick();
-            waitingDoubleClick = false;
-          } else {
-            lastRelease = millis();
-            waitingDoubleClick = true;
-          }
+          lastRelease = millis();
+          waitingDoubleClick = true;
         }
       }
     }

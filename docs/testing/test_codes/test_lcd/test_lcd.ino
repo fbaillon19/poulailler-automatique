@@ -51,15 +51,15 @@ void setup() {
   // Initialize serial communication (for debug)
   Serial.begin(9600);
   
-  Serial.println("============================================");
-  Serial.println("LCD I2C 16x2 TEST - Automatic Chicken Coop");
-  Serial.println("============================================");
-  Serial.println("Test: 2.3 - LCD I2C Display");
-  Serial.println("");
-  Serial.println("🖥️  Initializing LCD I2C...");
+  Serial.println(F("============================================"));
+  Serial.println(F("LCD I2C 16x2 TEST - Automatic Chicken Coop"));
+  Serial.println(F("============================================"));
+  Serial.println(F("Test: 2.3 - LCD I2C Display"));
+  Serial.println();
+  Serial.println(F("🖥️  Initializing LCD I2C..."));
   
   // Test multiple common I2C addresses
-  Serial.println("🔍 Searching for LCD on I2C bus...");
+  Serial.println(F("🔍 Searching for LCD on I2C bus..."));
   
   // Try address 0x27 (most common)
   lcd.init();
@@ -67,17 +67,17 @@ void setup() {
   
   // Simple write test
   lcd.setCursor(0, 0);
-  lcd.print("Testing LCD...");
+  lcd.print(F("Testing LCD..."));
   delay(1000);
   
   // Check if LCD responds
   Wire.beginTransmission(0x27);
   if (Wire.endTransmission() == 0) {
-    Serial.println("✅ LCD found at address 0x27");
+    Serial.println(F("✅ LCD found at address 0x27"));
     lcdInitialized = true;
   } else {
     // Try alternative address 0x3F
-    Serial.println("❌ No LCD at 0x27, trying 0x3F...");
+    Serial.println(F("❌ No LCD at 0x27, trying 0x3F..."));
     LiquidCrystal_I2C lcd_alt(0x3F, 16, 2);
     lcd = lcd_alt;
     lcd.init();
@@ -85,18 +85,18 @@ void setup() {
     
     Wire.beginTransmission(0x3F);
     if (Wire.endTransmission() == 0) {
-      Serial.println("✅ LCD found at address 0x3F");
+      Serial.println(F("✅ LCD found at address 0x3F"));
       lcdInitialized = true;
     } else {
-      Serial.println("❌ FAILURE: No LCD found on I2C!");
-      Serial.println("");
-      Serial.println("Checks to perform:");
-      Serial.println("- I2C wiring: SDA→A4, SCL→A5");
-      Serial.println("- Power supply: VCC→5V, GND→GND");
-      Serial.println("- LCD I2C module functional");
-      Serial.println("- I2C address: scan to find");
-      Serial.println("");
-      Serial.println("⏸️  Test stopped - Fix and restart");
+      Serial.println(F("❌ FAILURE: No LCD found on I2C!"));
+      Serial.println();
+      Serial.println(F("Checks to perform:"));
+      Serial.println(F("- I2C wiring: SDA→A4, SCL→A5"));
+      Serial.println(F("- Power supply: VCC→5V, GND→GND"));
+      Serial.println(F("- LCD I2C module functional"));
+      Serial.println(F("- I2C address: scan to find"));
+      Serial.println();
+      Serial.println(F("⏸️  Test stopped - Fix and restart"));
       
       while(true) {
         delay(1000);
@@ -107,13 +107,13 @@ void setup() {
   // Successful initialization
   lcd.clear();
   lcd.setCursor(0, 0);
-  lcd.print("LCD I2C OK!");
+  lcd.print(F("LCD I2C OK!"));
   lcd.setCursor(0, 1);
-  lcd.print("Test starting...");
+  lcd.print(F("Test starting..."));
   
-  Serial.println("✅ LCD initialized successfully");
-  Serial.println("👀 Watch the LCD screen for the rest of the test");
-  Serial.println("");
+  Serial.println(F("✅ LCD initialized successfully"));
+  Serial.println(F("👀 Watch the LCD screen for the rest of the test"));
+  Serial.println();
   
   delay(2000);
 }
@@ -184,14 +184,14 @@ void loop() {
 void testBasicDisplay() {
   lcd.clear();
   lcd.setCursor(0, 0);
-  lcd.print("DISPLAY TEST");
+  lcd.print(F("DISPLAY TEST"));
   lcd.setCursor(0, 1);
-  lcd.print("Phase 1/6 - ");
+  lcd.print(F("Phase 1/6 - "));
   lcd.print(6 - (counter/2));
   
-  Serial.print("Phase 1: Basic display - ");
+  Serial.print(F("Phase 1: Basic display - "));
   Serial.print(6 - (counter/2));
-  Serial.println("s");
+  Serial.println(F("s"));
 }
 
 /*
@@ -200,14 +200,14 @@ void testBasicDisplay() {
 void testPositioning() {
   lcd.clear();
   lcd.setCursor(0, 0);
-  lcd.print("POSITIONING");
+  lcd.print(F("POSITIONING"));
   
   // Moving character display
   int pos = counter % 16;
   lcd.setCursor(pos, 1);
-  lcd.print("*");
+  lcd.print(F("*"));
   
-  Serial.print("Phase 2: Cursor positioning - pos ");
+  Serial.print(F("Phase 2: Cursor positioning - pos "));
   Serial.println(pos);
 }
 
@@ -217,7 +217,7 @@ void testPositioning() {
 void testSpecialCharacters() {
   lcd.clear();
   lcd.setCursor(0, 0);
-  lcd.print("CHARACTERS");
+  lcd.print(F("CHARACTERS"));
   lcd.setCursor(0, 1);
   
     char characters[] = {'!', '@', '#', '$', '%', '^', '&', '*', '(', ')'};
@@ -232,7 +232,7 @@ void testSpecialCharacters() {
   lcd.setCursor(13, 1);
   lcd.print((char)0xFE); // Partial block
   
-  Serial.println("Phase 3: Special characters");
+  Serial.println(F("Phase 3: Special characters"));
 }
 
 /*
@@ -241,7 +241,7 @@ void testSpecialCharacters() {
 void testAnimations() {
   lcd.clear();
   lcd.setCursor(0, 0);
-  lcd.print("ANIMATIONS");
+  lcd.print(F("ANIMATIONS"));
   
   // Progress bar
   int progress = (counter * 16) / 20;
@@ -250,13 +250,13 @@ void testAnimations() {
     if (i < progress) {
       lcd.print((char)0xFF); // Full block
     } else {
-      lcd.print("-");
+      lcd.print(F("-"));
     }
   }
   
-  Serial.print("Phase 4: Animations - progress ");
+  Serial.print(F("Phase 4: Animations - progress "));
   Serial.print((counter * 100) / 20);
-  Serial.println("%");
+  Serial.println(F("%"));
 }
 
 /*
@@ -269,12 +269,12 @@ void testInterfaceSimulation() {
   lcd.setCursor(0, 0);
   int hours = (counter / 4) % 24;
   int minutes = (counter * 3) % 60;
-  if (hours < 10) lcd.print("0");
+  if (hours < 10) lcd.print(F("0"));
   lcd.print(hours);
-  lcd.print(":");
-  if (minutes < 10) lcd.print("0");
+  lcd.print(F(":"));
+  if (minutes < 10) lcd.print(F("0"));
   lcd.print(minutes);
-  lcd.print("      ");
+  lcd.print(F("      "));
   
   // Door status simulation
   lcd.setCursor(0, 1);
@@ -289,7 +289,7 @@ void testInterfaceSimulation() {
   int statusIndex = (counter / 4) % 5;
   lcd.print(status[statusIndex]);
   
-  Serial.print("Phase 5: Real interface - ");
+  Serial.print(F("Phase 5: Real interface - "));
   Serial.println(status[statusIndex]);
 }
 
@@ -299,40 +299,40 @@ void testInterfaceSimulation() {
 void testFinal() {
   if (counter == 1) {
     // First display of results
-    Serial.println("");
-    Serial.println("============================================");
-    Serial.println("✅ LCD I2C TEST COMPLETED SUCCESSFULLY");
-    Serial.println("============================================");
-    Serial.println("");
-    Serial.println("📊 Test results:");
-    Serial.println("- I2C communication: OK");
-    Serial.println("- Text display: OK");
-    Serial.println("- Cursor positioning: OK");
-    Serial.println("- Special characters: OK");
-    Serial.println("- Animations: OK");
-    Serial.println("- Interface simulation: OK");
-    Serial.println("");
-    Serial.println("➡️  Ready for next test: Sensors");
-    Serial.println("");
+    Serial.println();
+    Serial.println(F("============================================"));
+    Serial.println(F("✅ LCD I2C TEST COMPLETED SUCCESSFULLY"));
+    Serial.println(F("============================================"));
+    Serial.println();
+    Serial.println(F("📊 Test results:"));
+    Serial.println(F("- I2C communication: OK"));
+    Serial.println(F("- Text display: OK"));
+    Serial.println(F("- Cursor positioning: OK"));
+    Serial.println(F("- Special characters: OK"));
+    Serial.println(F("- Animations: OK"));
+    Serial.println(F("- Interface simulation: OK"));
+    Serial.println();
+    Serial.println(F("➡️  Ready for next test: Sensors"));
+    Serial.println();
   }
   
   // Permanent final display
   lcd.clear();
   lcd.setCursor(0, 0);
-  lcd.print("LCD TEST OK!");
+  lcd.print(F("LCD TEST OK!"));
   lcd.setCursor(0, 1);
   
   // Final incrementing counter
-  lcd.print("Counter: ");
+  lcd.print(F("Counter: "));
   lcd.print(counter);
   
   // Blinking to show it's working
   if ((counter % 4) < 2) {
     lcd.setCursor(15, 0);
-    lcd.print("*");
+    lcd.print(F("*"));
   } else {
     lcd.setCursor(15, 0);
-    lcd.print(" ");
+    lcd.print(F(" "));
   }
 }
 

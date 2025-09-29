@@ -189,17 +189,17 @@ void setup() {
   lcd.init();
   lcd.backlight();
   lcd.setCursor(0, 0);
-  lcd.print("Poulailler Auto");
+  lcd.print(F("Poulailler Auto"));
   lcd.setCursor(0, 1);
-  lcd.print("Initialisation..");
+  lcd.print(F("Initialisation.."));
   delay(2000);
   
   // Initialisation du RTC / RTC initialization
   if (!rtc.begin()) {
     lcd.clear();
     lcd.setCursor(0, 0);
-    lcd.print("Erreur RTC!");
-    Serial.println("RTC non trouvé ! / RTC not found!");
+    lcd.print(F("Erreur RTC!"));
+    Serial.println(F("RTC non trouvé ! / RTC not found!"));
     while (1);
   }
   
@@ -209,22 +209,22 @@ void setup() {
   // Vérification si le RTC a perdu l'alimentation / Check if RTC lost power
   if (rtc.lostPower()) {
     coupureCourant = true;
-    Serial.println("RTC a perdu l'alimentation / RTC lost power");
+    Serial.println(F("RTC a perdu l'alimentation / RTC lost power"));
     // Décommentez la ligne suivante pour régler l'heure automatiquement
     // Uncomment next line to set time automatically
-    // rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
+    rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
   }
   
   // Déterminer l'état initial de la porte / Determine initial door state
   if (digitalRead(FIN_COURSE_HAUT) == LOW) {
     porteOuverte = true;
-    Serial.println("Porte détectée ouverte au démarrage / Door detected open at startup");
+    Serial.println(F("Porte détectée ouverte au démarrage / Door detected open at startup"));
   } else if (digitalRead(FIN_COURSE_BAS) == LOW) {
     porteOuverte = false;
-    Serial.println("Porte détectée fermée au démarrage / Door detected closed at startup");
+    Serial.println(F("Porte détectée fermée au démarrage / Door detected closed at startup"));
   }
   
-  Serial.println("Système initialisé / System initialized");
+  Serial.println(F("Système initialisé / System initialized"));
   lcd.clear();
 }
 
@@ -271,7 +271,7 @@ void loop() {
       
       // Condition 1: Ouverture automatique à 7h00 / Automatic opening at 7:00 AM
       if (maintenant.hour() == 7 && maintenant.minute() == 0 && !porteOuverte) {
-        Serial.println("7h00 - Ouverture automatique / 7:00 AM - Automatic opening");
+        Serial.println(F("7h00 - Ouverture automatique / 7:00 AM - Automatic opening"));
         ouvrirPorte();
       }
       
@@ -280,7 +280,7 @@ void loop() {
       
       // Condition 3: Fermeture forcée à 23h00 / Forced closing at 11:00 PM
       if (maintenant.hour() == 23 && maintenant.minute() == 0 && porteOuverte) {
-        Serial.println("23h00 - Fermeture forcée / 11:00 PM - Forced closing");
+        Serial.println(F("23h00 - Fermeture forcée / 11:00 PM - Forced closing"));
         fermerPorte();
       }
     }
@@ -371,10 +371,10 @@ void gererAppuiBref() {
           ouvrirPorte();
         }
       } else if (porteOuverte) {
-        Serial.println("Fermeture manuelle demandée / Manual closing requested");
+        Serial.println(F("Fermeture manuelle demandée / Manual closing requested"));
         fermerPorte();
       } else {
-        Serial.println("Ouverture manuelle demandée / Manual opening requested");
+        Serial.println(F("Ouverture manuelle demandée / Manual opening requested"));
         ouvrirPorte();
       }
       break;
@@ -520,91 +520,91 @@ void gererAffichageLCD(DateTime maintenant) {
   switch (modeActuel) {
     case MODE_NORMAL:
       // Ligne 1: Heure / Line 1: Time
-      if (maintenant.hour() < 10) lcd.print("0");
+      if (maintenant.hour() < 10) lcd.print(F("0"));
       lcd.print(maintenant.hour());
-      lcd.print(":");
-      if (maintenant.minute() < 10) lcd.print("0");
+      lcd.print(F(":"));
+      if (maintenant.minute() < 10) lcd.print(F("0"));
       lcd.print(maintenant.minute());
-      lcd.print("      "); // Effacer le reste / Clear remainder
+      lcd.print(F("      ")); // Effacer le reste / Clear remainder
       
       // Ligne 2: Statut de la porte / Line 2: Door status
       lcd.setCursor(0, 1);
       if (etatActuel == OUVERTURE) {
-        lcd.print("Ouverture...    ");
+        lcd.print(F("Ouverture...    "));
       } else if (etatActuel == FERMETURE) {
-        lcd.print("Fermeture...    ");
+        lcd.print(F("Fermeture...    "));
       } else if (lumiereFaibleDetectee) {
         unsigned long tempsRestant = (TEMPO_FERMETURE - (millis() - debutLumiereFaible)) / 60000;
-        lcd.print("Ferme dans ");
+        lcd.print(F("Ferme dans "));
         lcd.print(tempsRestant + 1);
-        lcd.print("mn ");
+        lcd.print(F("mn "));
       } else if (etatActuel == ERREUR_OBSTACLE) {
-        lcd.print("ERREUR OBSTACLE ");
+        lcd.print(F("ERREUR OBSTACLE "));
       } else {
-        lcd.print(porteOuverte ? "Porte ouverte   " : "Porte fermee    ");
+        lcd.print(porteOuverte ? F("Porte ouverte   ") : F("Porte fermee    "));
       }
       break;
       
     case MODE_REGLAGE_HEURE:
       if (clignotement) {
-        lcd.print("  :");
+        lcd.print(F("  :"));
       } else {
-        if (maintenant.hour() < 10) lcd.print("0");
+        if (maintenant.hour() < 10) lcd.print(F("0"));
         lcd.print(maintenant.hour());
-        lcd.print(":");
+        lcd.print(F(":"));
       }
-      if (maintenant.minute() < 10) lcd.print("0");
+      if (maintenant.minute() < 10) lcd.print(F("0"));
       lcd.print(maintenant.minute());
-      lcd.print("      ");
+      lcd.print(F("      "));
       
       lcd.setCursor(0, 1);
-      lcd.print("Reglage heure   ");
+      lcd.print(F("Reglage heure   "));
       break;
       
     case MODE_REGLAGE_MINUTE:
-      if (maintenant.hour() < 10) lcd.print("0");
+      if (maintenant.hour() < 10) lcd.print(F("0"));
       lcd.print(maintenant.hour());
-      lcd.print(":");
+      lcd.print(F(":"));
       if (clignotement) {
-        lcd.print("  ");
+        lcd.print(F("  "));
       } else {
-        if (maintenant.minute() < 10) lcd.print("0");
+        if (maintenant.minute() < 10) lcd.print(F("0"));
         lcd.print(maintenant.minute());
       }
-      lcd.print("      ");
+      lcd.print(F("      "));
       
       lcd.setCursor(0, 1);
-      lcd.print("Reglage minute  ");
+      lcd.print(F("Reglage minute  "));
       break;
       
     case MODE_REGLAGE_SEUIL:
-      lcd.print("Seuil: ");
+      lcd.print(F("Seuil: "));
       lcd.print(seuilLumiere);
-      lcd.print("     ");
+      lcd.print(F("     "));
       
       lcd.setCursor(0, 1);
       int valeurActuelle = analogRead(CAPTEUR_LUMIERE);
-      lcd.print("Actuel: ");
+      lcd.print(F("Actuel: "));
       lcd.print(valeurActuelle);
-      lcd.print("     ");
+      lcd.print(F("     "));
       break;
       
     case MODE_REGLAGE_TIMEOUT_OUVERTURE:
-      lcd.print("Timeout ouv: ");
+      lcd.print(F("Timeout ouv: "));
       lcd.print(timeoutOuverture);
-      lcd.print("s ");
+      lcd.print(F("s "));
       
       lcd.setCursor(0, 1);
-      lcd.print("Bref:+1 Dbl:-1  ");
+      lcd.print(F("Bref:+1 Dbl:-1  "));
       break;
       
     case MODE_REGLAGE_TIMEOUT_FERMETURE:
-      lcd.print("Timeout fer: ");
+      lcd.print(F("Timeout fer: "));
       lcd.print(timeoutFermeture);
-      lcd.print("s ");
+      lcd.print(F("s "));
       
       lcd.setCursor(0, 1);
-      lcd.print("Bref:+1 Dbl:-1  ");
+      lcd.print(F("Bref:+1 Dbl:-1  "));
       break;
   }
 }
@@ -685,7 +685,7 @@ void chargerParametresEEPROM() {
  */
 void ouvrirPorte() {
   if (!porteOuverte && (etatActuel == ARRET || etatActuel == ERREUR_OBSTACLE)) {
-    Serial.println("Début ouverture porte / Starting door opening");
+    Serial.println(F("Début ouverture porte / Starting door opening"));
     etatActuel = OUVERTURE;
     debutMouvementPorte = millis();
     digitalWrite(MOTEUR_PIN1, HIGH);
@@ -702,7 +702,7 @@ void ouvrirPorte() {
  */
 void fermerPorte() {
   if (porteOuverte && (etatActuel == ARRET || etatActuel == ERREUR_OBSTACLE)) {
-    Serial.println("Début fermeture porte / Starting door closing");
+    Serial.println(F("Début fermeture porte / Starting door closing"));
     etatActuel = FERMETURE;
     debutMouvementPorte = millis();
     digitalWrite(MOTEUR_PIN1, LOW);
@@ -735,13 +735,13 @@ void gererMouvementPorte() {
     case OUVERTURE:
       // Vérifier timeout / Check timeout
       if (millis() - debutMouvementPorte > (unsigned long)timeoutOuverture * 1000) {
-        Serial.println("Timeout ouverture - Obstacle détecté / Opening timeout - Obstacle detected");
+        Serial.println(F("Timeout ouverture - Obstacle détecté / Opening timeout - Obstacle detected"));
         arreterMoteur();
         etatActuel = ERREUR_OBSTACLE;
       }
       // Vérifier fin de course / Check limit switch
       else if (digitalRead(FIN_COURSE_HAUT) == LOW) {
-        Serial.println("Porte complètement ouverte / Door fully open");
+        Serial.println(F("Porte complètement ouverte / Door fully open"));
         arreterMoteur();
         porteOuverte = true;
       }
@@ -750,13 +750,13 @@ void gererMouvementPorte() {
     case FERMETURE:
       // Vérifier timeout / Check timeout
       if (millis() - debutMouvementPorte > (unsigned long)timeoutFermeture * 1000) {
-        Serial.println("Timeout fermeture - Obstacle détecté / Closing timeout - Obstacle detected");
+        Serial.println(F("Timeout fermeture - Obstacle détecté / Closing timeout - Obstacle detected"));
         arreterMoteur();
         etatActuel = ERREUR_OBSTACLE;
       }
       // Vérifier fin de course / Check limit switch
       else if (digitalRead(FIN_COURSE_BAS) == LOW) {
-        Serial.println("Porte complètement fermée / Door fully closed");
+        Serial.println(F("Porte complètement fermée / Door fully closed"));
         arreterMoteur();
         porteOuverte = false;
       }
@@ -793,17 +793,17 @@ void gererFermetureLumiere(int valeurLumiere, int heureActuelle) {
       // Début de la temporisation / Start of delay
       lumiereFaibleDetectee = true;
       debutLumiereFaible = millis();
-      Serial.println("Début détection lumière faible - temporisation 10 minutes / Start low light detection - 10 minutes delay");
+      Serial.println(F("Début détection lumière faible - temporisation 10 minutes / Start low light detection - 10 minutes delay"));
     } else if (millis() - debutLumiereFaible >= TEMPO_FERMETURE) {
       // Temporisation écoulée / Delay elapsed
-      Serial.println("Temporisation écoulée - Fermeture automatique / Delay elapsed - Automatic closing");
+      Serial.println(F("Temporisation écoulée - Fermeture automatique / Delay elapsed - Automatic closing"));
       fermerPorte();
       lumiereFaibleDetectee = false;
     }
   } else {
     // La lumière est revenue / Light has returned
     if (lumiereFaibleDetectee) {
-      Serial.println("Lumière revenue - Annulation temporisation fermeture / Light returned - Closing delay cancelled");
+      Serial.println(F("Lumière revenue - Annulation temporisation fermeture / Light returned - Closing delay cancelled"));
       lumiereFaibleDetectee = false;
       debutLumiereFaible = 0;
     }

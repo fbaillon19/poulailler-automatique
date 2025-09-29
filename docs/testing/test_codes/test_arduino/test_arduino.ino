@@ -44,26 +44,26 @@ void setup() {
   pinMode(3, INPUT);    // Test input pin
   
   // Startup message
-  Serial.println("============================================");
-  Serial.println("ARDUINO NANO TEST - Automatic Chicken Coop");
-  Serial.println("============================================");
-  Serial.println("Version: 1.0");
-  Serial.println("Test: 2.1 - Arduino Basic Functionality");
-  Serial.println("");
+  Serial.println(F("============================================"));
+  Serial.println(F("ARDUINO NANO TEST - Automatic Chicken Coop"));
+  Serial.println(F("============================================"));
+  Serial.println(F("Version: 1.0"));
+  Serial.println(F("Test: 2.1 - Arduino Basic Functionality"));
+  Serial.println();
   
   // System information
-  Serial.print("CPU Frequency: ");
+  Serial.print(F("CPU Frequency: "));
   Serial.print(F_CPU / 1000000);
-  Serial.println(" MHz");
+  Serial.println(F(" MHz"));
   
-  Serial.print("Reference Voltage: ");
-  Serial.print(5.0);
-  Serial.println(" V");
+  Serial.print(F("Reference Voltage: "));
+  Serial.print(F("5.0"));
+  Serial.println(F(" V"));
   
-  Serial.println("");
-  Serial.println("Starting test...");
-  Serial.println("Expected: Messages every second + LED blinks");
-  Serial.println("");
+  Serial.println();
+  Serial.println(F("Starting test..."));
+  Serial.println(F("Expected: Messages every second + LED blinks"));
+  Serial.println();
   
   delay(1000);
 }
@@ -82,47 +82,47 @@ void loop() {
     digitalWrite(2, ledState);
     
     // Display status
-    Serial.print("Test #");
+    Serial.print(F("Test #"));
     Serial.print(counter);
-    Serial.print(" | Time: ");
+    Serial.print(F(" | Time: "));
     Serial.print(millis() / 1000);
-    Serial.print("s | LED: ");
-    Serial.print(ledState ? "ON " : "OFF");
-    Serial.print(" | Pin2: ");
-    Serial.print(digitalRead(2) ? "HIGH" : "LOW");
-    Serial.print(" | Pin3: ");
-    Serial.print(digitalRead(3) ? "HIGH" : "LOW");
-    Serial.print(" | Free RAM: ");
+    Serial.print(F("s | LED: "));
+    Serial.print(ledState ? F("ON ") : F("OFF"));
+    Serial.print(F(" | Pin2: "));
+    Serial.print(digitalRead(2) ? F("HIGH") : F("LOW"));
+    Serial.print(F(" | Pin3: "));
+    Serial.print(digitalRead(3) ? F("HIGH") : F("LOW"));
+    Serial.print(F(" | Free RAM: "));
     Serial.print(getFreeMemory());
-    Serial.println(" bytes");
+    Serial.println(F(" bytes"));
     
     // Periodic status messages
     if (counter % 10 == 0) {
-      Serial.println("");
-      Serial.print("✅ Arduino running for ");
+      Serial.println();
+      Serial.print(F("✅ Arduino running for "));
       Serial.print(counter);
-      Serial.println(" seconds");
-      Serial.println("");
+      Serial.println(F(" seconds"));
+      Serial.println();
     }
     
     // Test completed after 30 seconds
     if (counter >= 30) {
-      Serial.println("");
-      Serial.println("============================================");
-      Serial.println("✅ ARDUINO NANO TEST COMPLETED SUCCESSFULLY");
-      Serial.println("============================================");
-      Serial.println("");
-      Serial.println("Results:");
-      Serial.print("- Test duration: ");
+      Serial.println();
+      Serial.println(F("============================================"));
+      Serial.println(F("✅ ARDUINO NANO TEST COMPLETED SUCCESSFULLY"));
+      Serial.println(F("============================================"));
+      Serial.println();
+      Serial.println(F("Results:"));
+      Serial.print(F("- Test duration: "));
       Serial.print(counter);
-      Serial.println(" seconds");
-      Serial.println("- Serial communication: OK");
-      Serial.println("- Main loop: OK");
-      Serial.println("- Pin control: OK");
-      Serial.println("- Built-in LED: OK");
-      Serial.println("");
-      Serial.println("➡️  Ready for next test: RTC DS3231");
-      Serial.println("");
+      Serial.println(F(" seconds"));
+      Serial.println(F("- Serial communication: OK"));
+      Serial.println(F("- Main loop: OK"));
+      Serial.println(F("- Pin control: OK"));
+      Serial.println(F("- Built-in LED: OK"));
+      Serial.println();
+      Serial.println(F("➡️  Ready for next test: RTC DS3231"));
+      Serial.println();
       
       // Success blinking
       for (int i = 0; i < 10; i++) {
