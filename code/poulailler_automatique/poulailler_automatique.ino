@@ -15,7 +15,7 @@
  * Date: 2025
  * Licence / License: MIT
  * 
- * Repo GitHub: https://github.com/[votre-username]/poulailler-automatique
+ * Repo GitHub: https://github.com/fbaillon19/poulailler-automatique
  * 
  * ============================================================================
  * FONCTIONNALITÉS / FEATURES:
@@ -84,82 +84,82 @@
 // ============================================================================
 // CONFIGURATION DES BROCHES / PIN CONFIGURATION
 // ============================================================================
-const int MOTEUR_PIN1 = 7;        // Contrôle moteur direction 1 / Motor control direction 1
-const int MOTEUR_PIN2 = 6;        // Contrôle moteur direction 2 / Motor control direction 2
-const int CAPTEUR_LUMIERE = A0;   // Capteur de luminosité / Light sensor
-const int BOUTON_PIN = 5;         // Bouton multifonction / Multi-function button
-const int FIN_COURSE_HAUT = 8;    // Capteur fin de course haut / TOP limit switch
-const int FIN_COURSE_BAS = 9;     // Capteur fin de course bas / BOTTOM limit switch
-const int LED_COUPURE = 3;        // LED clignotante coupure courant / Power outage blinking LED
+const int MOTOR_PIN1 = 7;              // Contrôle moteur direction 1 / Motor control direction 1
+const int MOTOR_PIN2 = 6;              // Contrôle moteur direction 2 / Motor control direction 2
+const int LIGHT_SENSOR = A0;           // Capteur de luminosité / Light sensor
+const int BUTTON_PIN = 5;              // Bouton multifonction / Multi-function button
+const int TOP_LIMIT_SWITCH = 8;        // Capteur fin de course haut / TOP limit switch
+const int BOTTOM_LIMIT_SWITCH = 9;     // Capteur fin de course bas / BOTTOM limit switch
+const int POWER_OUTAGE_LED = 3;        // LED clignotante coupure courant / Power outage blinking LED
 
 // ============================================================================
 // CONSTANTES / CONSTANTS
 // ============================================================================
-const unsigned long TEMPO_FERMETURE = 600000; // 10 minutes en millisecondes / 10 minutes in milliseconds
-const unsigned long APPUI_LONG = 3000;        // 3 secondes pour appui long / 3 seconds for long press
-const unsigned long TIMEOUT_REGLAGE = 10000;  // 10 secondes timeout mode réglage / 10 seconds settings timeout
-const unsigned long DOUBLE_CLIC = 500;        // 500ms pour détecter double-clic / 500ms to detect double-click
+const unsigned long CLOSING_DELAY = 600000;        // 10 minutes en millisecondes / 10 minutes in milliseconds
+const unsigned long LONG_PRESS_TIME = 3000;        // 3 secondes pour appui long / 3 seconds for long press
+const unsigned long SETTINGS_TIMEOUT = 10000;      // 10 secondes timeout mode réglage / 10 seconds settings timeout
+const unsigned long DOUBLE_CLICK_TIME = 500;       // 500ms pour détecter double-clic / 500ms to detect double-click
 
 // Adresses EEPROM / EEPROM addresses
-const int SEUIL_EEPROM_ADDR = 0;              // Adresse EEPROM seuil / EEPROM address for threshold
-const int TIMEOUT_OUVERTURE_ADDR = 2;        // Adresse EEPROM timeout ouverture / EEPROM address opening timeout
-const int TIMEOUT_FERMETURE_ADDR = 4;        // Adresse EEPROM timeout fermeture / EEPROM address closing timeout
+const int THRESHOLD_EEPROM_ADDR = 0;               // Adresse EEPROM seuil / EEPROM address for threshold
+const int OPENING_TIMEOUT_ADDR = 2;                // Adresse EEPROM timeout ouverture / EEPROM address opening timeout
+const int CLOSING_TIMEOUT_ADDR = 4;                // Adresse EEPROM timeout fermeture / EEPROM address closing timeout
 
 // Valeurs par défaut / Default values
-const int SEUIL_DEFAULT = 300;                // Valeur par défaut seuil / Default threshold value
-const int TIMEOUT_OUVERTURE_DEFAULT = 15;    // 15 secondes par défaut / 15 seconds default
-const int TIMEOUT_FERMETURE_DEFAULT = 30;    // 30 secondes par défaut / 30 seconds default
+const int DEFAULT_THRESHOLD = 300;                 // Valeur par défaut seuil / Default threshold value
+const int DEFAULT_OPENING_TIMEOUT = 15;            // 15 secondes par défaut / 15 seconds default
+const int DEFAULT_CLOSING_TIMEOUT = 30;            // 30 secondes par défaut / 30 seconds default
 
 // ============================================================================
 // VARIABLES GLOBALES / GLOBAL VARIABLES
 // ============================================================================
-RTC_DS3231 rtc;                              // Objet RTC / RTC object
-LiquidCrystal_I2C lcd(0x27, 16, 2);         // Écran LCD I2C / I2C LCD display
-bool porteOuverte = false;                   // État de la porte / Door state
-unsigned long dernierTempsLED = 0;          // Dernier changement LED / Last LED change
-bool etatLED = false;                        // État LED / LED state
-bool coupureCourant = false;                 // Détection coupure courant / Power outage detection
-unsigned long dernierTimeCheck = 0;         // Dernière vérification temporelle / Last time check
-int seuilLumiere = SEUIL_DEFAULT;           // Seuil de luminosité / Light threshold
-int timeoutOuverture = TIMEOUT_OUVERTURE_DEFAULT;  // Timeout ouverture en secondes / Opening timeout in seconds
-int timeoutFermeture = TIMEOUT_FERMETURE_DEFAULT;  // Timeout fermeture en secondes / Closing timeout in seconds
+RTC_DS3231 rtc;                                    // Objet RTC / RTC object
+LiquidCrystal_I2C lcd(0x27, 16, 2);               // Écran LCD I2C / I2C LCD display
+bool doorOpen = false;                             // État de la porte / Door state
+unsigned long lastLEDTime = 0;                    // Dernier changement LED / Last LED change
+bool ledState = false;                             // État LED / LED state
+bool powerOutage = false;                          // Détection coupure courant / Power outage detection
+unsigned long lastTimeCheck = 0;                  // Dernière vérification temporelle / Last time check
+int lightThreshold = DEFAULT_THRESHOLD;           // Seuil de luminosité / Light threshold
+int openingTimeout = DEFAULT_OPENING_TIMEOUT;     // Timeout ouverture en secondes / Opening timeout in seconds
+int closingTimeout = DEFAULT_CLOSING_TIMEOUT;     // Timeout fermeture en secondes / Closing timeout in seconds
 
 // Variables pour la temporisation de fermeture / Variables for closing delay
-unsigned long debutLumiereFaible = 0;       // Début détection lumière faible / Start of low light detection
-bool lumiereFaibleDetectee = false;         // Flag lumière faible / Low light flag
+unsigned long lowLightStartTime = 0;              // Début détection lumière faible / Start of low light detection
+bool lowLightDetected = false;                    // Flag lumière faible / Low light flag
 
 // Variables pour la gestion du bouton multifonction / Multi-function button variables
-unsigned long debutAppui = 0;               // Début d'appui bouton / Button press start
-bool boutonEnfonce = false;                  // État bouton enfoncé / Button pressed state
-bool appuiTraite = false;                    // Appui déjà traité / Press already processed
-unsigned long dernierRelachement = 0;       // Dernier relâchement bouton / Last button release
-bool enAttenteDoubleClick = false;          // Attente double-clic / Waiting for double-click
+unsigned long pressStartTime = 0;                 // Début d'appui bouton / Button press start
+bool buttonPressed = false;                        // État bouton enfoncé / Button pressed state
+bool pressProcessed = false;                       // Appui déjà traité / Press already processed
+unsigned long lastReleaseTime = 0;                // Dernier relâchement bouton / Last button release
+bool waitingDoubleClick = false;                  // Attente double-clic / Waiting for double-click
 
 // Variables pour les modes de réglage / Settings mode variables
-enum ModeReglage {
+enum SettingsMode {
   MODE_NORMAL,
-  MODE_REGLAGE_HEURE,
-  MODE_REGLAGE_MINUTE,
-  MODE_REGLAGE_SEUIL,
-  MODE_REGLAGE_TIMEOUT_OUVERTURE,
-  MODE_REGLAGE_TIMEOUT_FERMETURE
+  MODE_SET_HOUR,
+  MODE_SET_MINUTE,
+  MODE_SET_THRESHOLD,
+  MODE_SET_OPENING_TIMEOUT,
+  MODE_SET_CLOSING_TIMEOUT
 };
-ModeReglage modeActuel = MODE_NORMAL;        // Mode actuel / Current mode
-unsigned long debutModeReglage = 0;         // Début mode réglage / Settings mode start
-bool clignotement = false;                   // État clignotement / Blinking state
-unsigned long dernierClignotement = 0;      // Dernier clignotement / Last blink
+SettingsMode currentMode = MODE_NORMAL;           // Mode actuel / Current mode
+unsigned long settingsModeStart = 0;              // Début mode réglage / Settings mode start
+bool blinking = false;                             // État clignotement / Blinking state
+unsigned long lastBlinkTime = 0;                  // Dernier clignotement / Last blink
 
 // États de la porte / Door states
-enum EtatPorte {
-  ARRET,
-  OUVERTURE,
-  FERMETURE,
-  ERREUR_OBSTACLE
+enum DoorState {
+  STOPPED,
+  OPENING,
+  CLOSING,
+  OBSTACLE_ERROR
 };
-EtatPorte etatActuel = ARRET;               // État actuel porte / Current door state
+DoorState currentDoorState = STOPPED;             // État actuel porte / Current door state
 
 // Variables pour la gestion des timeouts moteur / Motor timeout variables
-unsigned long debutMouvementPorte = 0;     // Début mouvement porte / Door movement start
+unsigned long doorMovementStart = 0;              // Début mouvement porte / Door movement start
 
 // ============================================================================
 // FONCTION SETUP - INITIALISATION / SETUP FUNCTION - INITIALIZATION
@@ -175,15 +175,15 @@ void setup() {
   Serial.begin(9600);
   
   // Configuration des broches / Pin configuration
-  pinMode(MOTEUR_PIN1, OUTPUT);
-  pinMode(MOTEUR_PIN2, OUTPUT);
-  pinMode(BOUTON_PIN, INPUT_PULLUP);
-  pinMode(FIN_COURSE_HAUT, INPUT_PULLUP);
-  pinMode(FIN_COURSE_BAS, INPUT_PULLUP);
-  pinMode(LED_COUPURE, OUTPUT);
+  pinMode(MOTOR_PIN1, OUTPUT);
+  pinMode(MOTOR_PIN2, OUTPUT);
+  pinMode(BUTTON_PIN, INPUT_PULLUP);
+  pinMode(TOP_LIMIT_SWITCH, INPUT_PULLUP);
+  pinMode(BOTTOM_LIMIT_SWITCH, INPUT_PULLUP);
+  pinMode(POWER_OUTAGE_LED, OUTPUT);
   
   // Arrêt du moteur au démarrage / Stop motor at startup
-  arreterMoteur();
+  stopMotor();
   
   // Initialisation du LCD / LCD initialization
   lcd.init();
@@ -204,23 +204,23 @@ void setup() {
   }
   
   // Chargement des paramètres depuis l'EEPROM / Load parameters from EEPROM
-  chargerParametresEEPROM();
+  loadParametersFromEEPROM();
   
   // Vérification si le RTC a perdu l'alimentation / Check if RTC lost power
   if (rtc.lostPower()) {
-    coupureCourant = true;
+    powerOutage = true;
     Serial.println(F("RTC a perdu l'alimentation / RTC lost power"));
     // Décommentez la ligne suivante pour régler l'heure automatiquement
     // Uncomment next line to set time automatically
-    rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
+    // rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
   }
   
   // Déterminer l'état initial de la porte / Determine initial door state
-  if (digitalRead(FIN_COURSE_HAUT) == LOW) {
-    porteOuverte = true;
+  if (digitalRead(TOP_LIMIT_SWITCH) == LOW) {
+    doorOpen = true;
     Serial.println(F("Porte détectée ouverte au démarrage / Door detected open at startup"));
-  } else if (digitalRead(FIN_COURSE_BAS) == LOW) {
-    porteOuverte = false;
+  } else if (digitalRead(BOTTOM_LIMIT_SWITCH) == LOW) {
+    doorOpen = false;
     Serial.println(F("Porte détectée fermée au démarrage / Door detected closed at startup"));
   }
   
@@ -239,54 +239,54 @@ void setup() {
  * Retour / Return: void
  */
 void loop() {
-  DateTime maintenant = rtc.now();
+  DateTime now = rtc.now();
   
   // Gestion du bouton multifonction / Multi-function button management
-  gererBoutonMultifonction();
+  handleMultiFunctionButton();
   
   // Gestion du timeout pour sortir du mode réglage / Settings mode timeout management
-  if (modeActuel != MODE_NORMAL && millis() - debutModeReglage > TIMEOUT_REGLAGE) {
-    modeActuel = MODE_NORMAL;
+  if (currentMode != MODE_NORMAL && millis() - settingsModeStart > SETTINGS_TIMEOUT) {
+    currentMode = MODE_NORMAL;
   }
   
   // Gestion du clignotement en mode réglage / Blinking management in settings mode
-  if (millis() - dernierClignotement > 500) {
-    dernierClignotement = millis();
-    clignotement = !clignotement;
+  if (millis() - lastBlinkTime > 500) {
+    lastBlinkTime = millis();
+    blinking = !blinking;
   }
   
   // Gestion de l'affichage LCD / LCD display management
-  gererAffichageLCD(maintenant);
+  handleLCDDisplay(now);
   
   // Gestion de la LED de coupure / Power outage LED management
-  gererLEDCoupure();
+  handlePowerOutageLED();
   
   // Logique automatique seulement en mode normal / Automatic logic only in normal mode
-  if (modeActuel == MODE_NORMAL) {
+  if (currentMode == MODE_NORMAL) {
     // Vérifications automatiques toutes les secondes / Automatic checks every second
-    if (millis() - dernierTimeCheck > 1000) {
-      dernierTimeCheck = millis();
+    if (millis() - lastTimeCheck > 1000) {
+      lastTimeCheck = millis();
       
-      int valeurLumiere = analogRead(CAPTEUR_LUMIERE);
+      int lightValue = analogRead(LIGHT_SENSOR);
       
       // Condition 1: Ouverture automatique à 7h00 / Automatic opening at 7:00 AM
-      if (maintenant.hour() == 7 && maintenant.minute() == 0 && !porteOuverte) {
+      if (now.hour() == 7 && now.minute() == 0 && !doorOpen) {
         Serial.println(F("7h00 - Ouverture automatique / 7:00 AM - Automatic opening"));
-        ouvrirPorte();
+        openDoor();
       }
       
       // Condition 2: Fermeture avec temporisation / Closing with delay
-      gererFermetureLumiere(valeurLumiere, maintenant.hour());
+      handleLightClosing(lightValue, now.hour());
       
       // Condition 3: Fermeture forcée à 23h00 / Forced closing at 11:00 PM
-      if (maintenant.hour() == 23 && maintenant.minute() == 0 && porteOuverte) {
+      if (now.hour() == 23 && now.minute() == 0 && doorOpen) {
         Serial.println(F("23h00 - Fermeture forcée / 11:00 PM - Forced closing"));
-        fermerPorte();
+        closeDoor();
       }
     }
     
     // Gestion du mouvement de la porte / Door movement management
-    gererMouvementPorte();
+    handleDoorMovement();
   }
   
   delay(50);
@@ -302,41 +302,41 @@ void loop() {
  * Paramètres / Parameters: Aucun / None
  * Retour / Return: void
  */
-void gererBoutonMultifonction() {
-  bool etatBouton = digitalRead(BOUTON_PIN);
+void handleMultiFunctionButton() {
+  bool buttonState = digitalRead(BUTTON_PIN);
   
   // Détection du début d'appui / Press start detection
-  if (!boutonEnfonce && etatBouton == LOW) {
+  if (!buttonPressed && buttonState == LOW) {
     delay(20); // Anti-rebond / Debounce
-    if (digitalRead(BOUTON_PIN) == LOW) {
-      boutonEnfonce = true;
-      debutAppui = millis();
-      appuiTraite = false;
+    if (digitalRead(BUTTON_PIN) == LOW) {
+      buttonPressed = true;
+      pressStartTime = millis();
+      pressProcessed = false;
     }
   }
   
   // Détection du relâchement / Release detection
-  if (boutonEnfonce && etatBouton == HIGH) {
+  if (buttonPressed && buttonState == HIGH) {
     delay(20); // Anti-rebond / Debounce
-    if (digitalRead(BOUTON_PIN) == HIGH) {
-      boutonEnfonce = false;
-      unsigned long dureeAppui = millis() - debutAppui;
+    if (digitalRead(BUTTON_PIN) == HIGH) {
+      buttonPressed = false;
+      unsigned long pressDuration = millis() - pressStartTime;
       
-      if (!appuiTraite) {
-        if (dureeAppui >= APPUI_LONG) {
+      if (!pressProcessed) {
+        if (pressDuration >= LONG_PRESS_TIME) {
           // Appui long / Long press
-          gererAppuiLong();
+          handleLongPress();
         } else {
           // Appui bref / Short press
-          if (enAttenteDoubleClick && millis() - dernierRelachement < DOUBLE_CLIC) {
+          if (waitingDoubleClick && millis() - lastReleaseTime < DOUBLE_CLICK_TIME) {
             // Double-clic détecté / Double-click detected
-            gererDoubleClick();
-            enAttenteDoubleClick = false;
+            handleDoubleClick();
+            waitingDoubleClick = false;
           } else {
             // Premier appui bref, attendre pour voir s'il y a un double-clic
             // First short press, wait to see if there's a double-click
-            dernierRelachement = millis();
-            enAttenteDoubleClick = true;
+            lastReleaseTime = millis();
+            waitingDoubleClick = true;
           }
         }
       }
@@ -344,9 +344,9 @@ void gererBoutonMultifonction() {
   }
   
   // Gestion du timeout pour le double-clic / Double-click timeout management
-  if (enAttenteDoubleClick && millis() - dernierRelachement > DOUBLE_CLIC) {
-    gererAppuiBref();
-    enAttenteDoubleClick = false;
+  if (waitingDoubleClick && millis() - lastReleaseTime > DOUBLE_CLICK_TIME) {
+    handleShortPress();
+    waitingDoubleClick = false;
   }
 }
 
@@ -357,69 +357,69 @@ void gererBoutonMultifonction() {
  * Paramètres / Parameters: Aucun / None
  * Retour / Return: void
  */
-void gererAppuiBref() {
-  switch (modeActuel) {
+void handleShortPress() {
+  switch (currentMode) {
     case MODE_NORMAL:
       // Ouvrir/fermer la porte ou réessayer après erreur
       // Open/close door or retry after error
-      if (etatActuel == ERREUR_OBSTACLE) {
+      if (currentDoorState == OBSTACLE_ERROR) {
         // Réessayer le mouvement / Retry movement
-        etatActuel = ARRET;
-        if (porteOuverte) {
-          fermerPorte();
+        currentDoorState = STOPPED;
+        if (doorOpen) {
+          closeDoor();
         } else {
-          ouvrirPorte();
+          openDoor();
         }
-      } else if (porteOuverte) {
+      } else if (doorOpen) {
         Serial.println(F("Fermeture manuelle demandée / Manual closing requested"));
-        fermerPorte();
+        closeDoor();
       } else {
         Serial.println(F("Ouverture manuelle demandée / Manual opening requested"));
-        ouvrirPorte();
+        openDoor();
       }
       break;
       
-    case MODE_REGLAGE_HEURE:
+    case MODE_SET_HOUR:
       // Incrémenter l'heure / Increment hour
       {
-        DateTime maintenant = rtc.now();
-        int nouvelleHeure = (maintenant.hour() + 1) % 24;
-        rtc.adjust(DateTime(maintenant.year(), maintenant.month(), maintenant.day(), 
-                           nouvelleHeure, maintenant.minute(), maintenant.second()));
-        debutModeReglage = millis(); // Reset timeout
+        DateTime now = rtc.now();
+        int newHour = (now.hour() + 1) % 24;
+        rtc.adjust(DateTime(now.year(), now.month(), now.day(), 
+                           newHour, now.minute(), now.second()));
+        settingsModeStart = millis(); // Reset timeout
       }
       break;
       
-    case MODE_REGLAGE_MINUTE:
+    case MODE_SET_MINUTE:
       // Incrémenter les minutes / Increment minutes
       {
-        DateTime maintenant = rtc.now();
-        int nouvelleMinute = (maintenant.minute() + 1) % 60;
-        rtc.adjust(DateTime(maintenant.year(), maintenant.month(), maintenant.day(), 
-                           maintenant.hour(), nouvelleMinute, 0));
-        debutModeReglage = millis(); // Reset timeout
+        DateTime now = rtc.now();
+        int newMinute = (now.minute() + 1) % 60;
+        rtc.adjust(DateTime(now.year(), now.month(), now.day(), 
+                           now.hour(), newMinute, 0));
+        settingsModeStart = millis(); // Reset timeout
       }
       break;
       
-    case MODE_REGLAGE_SEUIL:
+    case MODE_SET_THRESHOLD:
       // Augmenter le seuil par pas de 5 / Increase threshold by steps of 5
-      seuilLumiere = min(1023, seuilLumiere + 5);
-      sauvegarderSeuil();
-      debutModeReglage = millis(); // Reset timeout
+      lightThreshold = min(1023, lightThreshold + 5);
+      saveThreshold();
+      settingsModeStart = millis(); // Reset timeout
       break;
       
-    case MODE_REGLAGE_TIMEOUT_OUVERTURE:
+    case MODE_SET_OPENING_TIMEOUT:
       // Augmenter timeout ouverture par pas de 1s / Increase opening timeout by 1s steps
-      timeoutOuverture = min(60, timeoutOuverture + 1);
-      sauvegarderTimeoutOuverture();
-      debutModeReglage = millis();
+      openingTimeout = min(60, openingTimeout + 1);
+      saveOpeningTimeout();
+      settingsModeStart = millis();
       break;
       
-    case MODE_REGLAGE_TIMEOUT_FERMETURE:
+    case MODE_SET_CLOSING_TIMEOUT:
       // Augmenter timeout fermeture par pas de 1s / Increase closing timeout by 1s steps
-      timeoutFermeture = min(60, timeoutFermeture + 1);
-      sauvegarderTimeoutFermeture();
-      debutModeReglage = millis();
+      closingTimeout = min(60, closingTimeout + 1);
+      saveClosingTimeout();
+      settingsModeStart = millis();
       break;
   }
 }
@@ -431,27 +431,27 @@ void gererAppuiBref() {
  * Paramètres / Parameters: Aucun / None
  * Retour / Return: void
  */
-void gererDoubleClick() {
-  switch (modeActuel) {
-    case MODE_REGLAGE_SEUIL:
+void handleDoubleClick() {
+  switch (currentMode) {
+    case MODE_SET_THRESHOLD:
       // Diminuer le seuil par pas de 5 / Decrease threshold by steps of 5
-      seuilLumiere = max(0, seuilLumiere - 5);
-      sauvegarderSeuil();
-      debutModeReglage = millis(); // Reset timeout
+      lightThreshold = max(0, lightThreshold - 5);
+      saveThreshold();
+      settingsModeStart = millis(); // Reset timeout
       break;
       
-    case MODE_REGLAGE_TIMEOUT_OUVERTURE:
+    case MODE_SET_OPENING_TIMEOUT:
       // Diminuer timeout ouverture par pas de 1s / Decrease opening timeout by 1s steps
-      timeoutOuverture = max(5, timeoutOuverture - 1);
-      sauvegarderTimeoutOuverture();
-      debutModeReglage = millis();
+      openingTimeout = max(5, openingTimeout - 1);
+      saveOpeningTimeout();
+      settingsModeStart = millis();
       break;
       
-    case MODE_REGLAGE_TIMEOUT_FERMETURE:
+    case MODE_SET_CLOSING_TIMEOUT:
       // Diminuer timeout fermeture par pas de 1s / Decrease closing timeout by 1s steps
-      timeoutFermeture = max(5, timeoutFermeture - 1);
-      sauvegarderTimeoutFermeture();
-      debutModeReglage = millis();
+      closingTimeout = max(5, closingTimeout - 1);
+      saveClosingTimeout();
+      settingsModeStart = millis();
       break;
   }
 }
@@ -463,44 +463,44 @@ void gererDoubleClick() {
  * Paramètres / Parameters: Aucun / None
  * Retour / Return: void
  */
-void gererAppuiLong() {
-  switch (modeActuel) {
+void handleLongPress() {
+  switch (currentMode) {
     case MODE_NORMAL:
       // En cas d'erreur obstacle, un appui long relance
       // In case of obstacle error, long press restarts
-      if (etatActuel == ERREUR_OBSTACLE) {
-        etatActuel = ARRET;
+      if (currentDoorState == OBSTACLE_ERROR) {
+        currentDoorState = STOPPED;
       } else {
-        modeActuel = MODE_REGLAGE_HEURE;
-        debutModeReglage = millis();
+        currentMode = MODE_SET_HOUR;
+        settingsModeStart = millis();
       }
       break;
       
-    case MODE_REGLAGE_HEURE:
-      modeActuel = MODE_REGLAGE_MINUTE;
-      debutModeReglage = millis();
+    case MODE_SET_HOUR:
+      currentMode = MODE_SET_MINUTE;
+      settingsModeStart = millis();
       break;
       
-    case MODE_REGLAGE_MINUTE:
-      modeActuel = MODE_REGLAGE_SEUIL;
-      debutModeReglage = millis();
+    case MODE_SET_MINUTE:
+      currentMode = MODE_SET_THRESHOLD;
+      settingsModeStart = millis();
       break;
       
-    case MODE_REGLAGE_SEUIL:
-      modeActuel = MODE_REGLAGE_TIMEOUT_OUVERTURE;
-      debutModeReglage = millis();
+    case MODE_SET_THRESHOLD:
+      currentMode = MODE_SET_OPENING_TIMEOUT;
+      settingsModeStart = millis();
       break;
       
-    case MODE_REGLAGE_TIMEOUT_OUVERTURE:
-      modeActuel = MODE_REGLAGE_TIMEOUT_FERMETURE;
-      debutModeReglage = millis();
+    case MODE_SET_OPENING_TIMEOUT:
+      currentMode = MODE_SET_CLOSING_TIMEOUT;
+      settingsModeStart = millis();
       break;
       
-    case MODE_REGLAGE_TIMEOUT_FERMETURE:
-      modeActuel = MODE_NORMAL;
+    case MODE_SET_CLOSING_TIMEOUT:
+      currentMode = MODE_NORMAL;
       break;
   }
-  appuiTraite = true;
+  pressProcessed = true;
 }
 
 // ============================================================================
@@ -514,62 +514,62 @@ void gererAppuiLong() {
  *   - maintenant: DateTime - Heure actuelle / Current time
  * Retour / Return: void
  */
-void gererAffichageLCD(DateTime maintenant) {
+void handleLCDDisplay(DateTime now) {
   lcd.setCursor(0, 0);
   
-  switch (modeActuel) {
+  switch (currentMode) {
     case MODE_NORMAL:
       // Ligne 1: Heure / Line 1: Time
-      if (maintenant.hour() < 10) lcd.print(F("0"));
-      lcd.print(maintenant.hour());
+      if (now.hour() < 10) lcd.print(F("0"));
+      lcd.print(now.hour());
       lcd.print(F(":"));
-      if (maintenant.minute() < 10) lcd.print(F("0"));
-      lcd.print(maintenant.minute());
-      lcd.print(F("      ")); // Effacer le reste / Clear remainder
+      if (now.minute() < 10) lcd.print(F("0"));
+      lcd.print(now.minute());
+      lcd.print(F("      "));
       
       // Ligne 2: Statut de la porte / Line 2: Door status
       lcd.setCursor(0, 1);
-      if (etatActuel == OUVERTURE) {
+      if (currentDoorState == OPENING) {
         lcd.print(F("Ouverture...    "));
-      } else if (etatActuel == FERMETURE) {
+      } else if (currentDoorState == CLOSING) {
         lcd.print(F("Fermeture...    "));
-      } else if (lumiereFaibleDetectee) {
-        unsigned long tempsRestant = (TEMPO_FERMETURE - (millis() - debutLumiereFaible)) / 60000;
+      } else if (lowLightDetected) {
+        unsigned long timeRemaining = (CLOSING_DELAY - (millis() - lowLightStartTime)) / 60000;
         lcd.print(F("Ferme dans "));
-        lcd.print(tempsRestant + 1);
+        lcd.print(timeRemaining + 1);
         lcd.print(F("mn "));
-      } else if (etatActuel == ERREUR_OBSTACLE) {
+      } else if (currentDoorState == OBSTACLE_ERROR) {
         lcd.print(F("ERREUR OBSTACLE "));
       } else {
-        lcd.print(porteOuverte ? F("Porte ouverte   ") : F("Porte fermee    "));
+        lcd.print(doorOpen ? F("Porte ouverte   ") : F("Porte fermee    "));
       }
       break;
       
-    case MODE_REGLAGE_HEURE:
-      if (clignotement) {
+    case MODE_SET_HOUR:
+      if (blinking) {
         lcd.print(F("  :"));
       } else {
-        if (maintenant.hour() < 10) lcd.print(F("0"));
-        lcd.print(maintenant.hour());
+        if (now.hour() < 10) lcd.print(F("0"));
+        lcd.print(now.hour());
         lcd.print(F(":"));
       }
-      if (maintenant.minute() < 10) lcd.print(F("0"));
-      lcd.print(maintenant.minute());
+      if (now.minute() < 10) lcd.print(F("0"));
+      lcd.print(now.minute());
       lcd.print(F("      "));
       
       lcd.setCursor(0, 1);
       lcd.print(F("Reglage heure   "));
       break;
       
-    case MODE_REGLAGE_MINUTE:
-      if (maintenant.hour() < 10) lcd.print(F("0"));
-      lcd.print(maintenant.hour());
+    case MODE_SET_MINUTE:
+      if (now.hour() < 10) lcd.print(F("0"));
+      lcd.print(now.hour());
       lcd.print(F(":"));
-      if (clignotement) {
+      if (blinking) {
         lcd.print(F("  "));
       } else {
-        if (maintenant.minute() < 10) lcd.print(F("0"));
-        lcd.print(maintenant.minute());
+        if (now.minute() < 10) lcd.print(F("0"));
+        lcd.print(now.minute());
       }
       lcd.print(F("      "));
       
@@ -577,30 +577,30 @@ void gererAffichageLCD(DateTime maintenant) {
       lcd.print(F("Reglage minute  "));
       break;
       
-    case MODE_REGLAGE_SEUIL:
+    case MODE_SET_THRESHOLD:
       lcd.print(F("Seuil: "));
-      lcd.print(seuilLumiere);
+      lcd.print(lightThreshold);
       lcd.print(F("     "));
       
       lcd.setCursor(0, 1);
-      int valeurActuelle = analogRead(CAPTEUR_LUMIERE);
+      int currentValue = analogRead(LIGHT_SENSOR);
       lcd.print(F("Actuel: "));
-      lcd.print(valeurActuelle);
+      lcd.print(currentValue);
       lcd.print(F("     "));
       break;
       
-    case MODE_REGLAGE_TIMEOUT_OUVERTURE:
+    case MODE_SET_OPENING_TIMEOUT:
       lcd.print(F("Timeout ouv: "));
-      lcd.print(timeoutOuverture);
+      lcd.print(openingTimeout);
       lcd.print(F("s "));
       
       lcd.setCursor(0, 1);
       lcd.print(F("Bref:+1 Dbl:-1  "));
       break;
       
-    case MODE_REGLAGE_TIMEOUT_FERMETURE:
+    case MODE_SET_CLOSING_TIMEOUT:
       lcd.print(F("Timeout fer: "));
-      lcd.print(timeoutFermeture);
+      lcd.print(closingTimeout);
       lcd.print(F("s "));
       
       lcd.setCursor(0, 1);
@@ -619,9 +619,9 @@ void gererAffichageLCD(DateTime maintenant) {
  * Paramètres / Parameters: Aucun / None
  * Retour / Return: void
  */
-void sauvegarderSeuil() {
-  EEPROM.write(SEUIL_EEPROM_ADDR, seuilLumiere & 0xFF);
-  EEPROM.write(SEUIL_EEPROM_ADDR + 1, (seuilLumiere >> 8) & 0xFF);
+void saveThreshold() {
+  EEPROM.write(THRESHOLD_EEPROM_ADDR, lightThreshold & 0xFF);
+  EEPROM.write(THRESHOLD_EEPROM_ADDR + 1, (lightThreshold >> 8) & 0xFF);
 }
 
 /**
@@ -631,8 +631,8 @@ void sauvegarderSeuil() {
  * Paramètres / Parameters: Aucun / None
  * Retour / Return: void
  */
-void sauvegarderTimeoutOuverture() {
-  EEPROM.write(TIMEOUT_OUVERTURE_ADDR, timeoutOuverture);
+void saveOpeningTimeout() {
+  EEPROM.write(OPENING_TIMEOUT_ADDR, openingTimeout);
 }
 
 /**
@@ -642,8 +642,8 @@ void sauvegarderTimeoutOuverture() {
  * Paramètres / Parameters: Aucun / None
  * Retour / Return: void
  */
-void sauvegarderTimeoutFermeture() {
-  EEPROM.write(TIMEOUT_FERMETURE_ADDR, timeoutFermeture);
+void saveClosingTimeout() {
+  EEPROM.write(CLOSING_TIMEOUT_ADDR, closingTimeout);
 }
 
 /**
@@ -653,23 +653,23 @@ void sauvegarderTimeoutFermeture() {
  * Paramètres / Parameters: Aucun / None
  * Retour / Return: void
  */
-void chargerParametresEEPROM() {
+void loadParametersFromEEPROM() {
   // Chargement du seuil / Loading threshold
-  int seuilSauve = EEPROM.read(SEUIL_EEPROM_ADDR) | (EEPROM.read(SEUIL_EEPROM_ADDR + 1) << 8);
-  if (seuilSauve >= 0 && seuilSauve <= 1023) {
-    seuilLumiere = seuilSauve;
+  int savedThreshold = EEPROM.read(THRESHOLD_EEPROM_ADDR) | (EEPROM.read(THRESHOLD_EEPROM_ADDR + 1) << 8);
+  if (savedThreshold >= 0 && savedThreshold <= 1023) {
+    lightThreshold = savedThreshold;
   }
   
   // Chargement timeout ouverture / Loading opening timeout
-  int timeoutOuv = EEPROM.read(TIMEOUT_OUVERTURE_ADDR);
-  if (timeoutOuv >= 5 && timeoutOuv <= 60) {
-    timeoutOuverture = timeoutOuv;
+  int savedOpeningTimeout = EEPROM.read(OPENING_TIMEOUT_ADDR);
+  if (savedOpeningTimeout >= 5 && savedOpeningTimeout <= 60) {
+    openingTimeout = savedOpeningTimeout;
   }
   
   // Chargement timeout fermeture / Loading closing timeout
-  int timeoutFer = EEPROM.read(TIMEOUT_FERMETURE_ADDR);
-  if (timeoutFer >= 5 && timeoutFer <= 60) {
-    timeoutFermeture = timeoutFer;
+  int savedClosingTimeout = EEPROM.read(CLOSING_TIMEOUT_ADDR);
+  if (savedClosingTimeout >= 5 && savedClosingTimeout <= 60) {
+    closingTimeout = savedClosingTimeout;
   }
 }
 
@@ -683,13 +683,13 @@ void chargerParametresEEPROM() {
  * Paramètres / Parameters: Aucun / None
  * Retour / Return: void
  */
-void ouvrirPorte() {
-  if (!porteOuverte && (etatActuel == ARRET || etatActuel == ERREUR_OBSTACLE)) {
+void openDoor() {
+  if (!doorOpen && (currentDoorState == STOPPED || currentDoorState == OBSTACLE_ERROR)) {
     Serial.println(F("Début ouverture porte / Starting door opening"));
-    etatActuel = OUVERTURE;
-    debutMouvementPorte = millis();
-    digitalWrite(MOTEUR_PIN1, HIGH);
-    digitalWrite(MOTEUR_PIN2, LOW);
+    currentDoorState = OPENING;
+    doorMovementStart = millis();
+    digitalWrite(MOTOR_PIN1, HIGH);
+    digitalWrite(MOTOR_PIN2, LOW);
   }
 }
 
@@ -700,13 +700,13 @@ void ouvrirPorte() {
  * Paramètres / Parameters: Aucun / None
  * Retour / Return: void
  */
-void fermerPorte() {
-  if (porteOuverte && (etatActuel == ARRET || etatActuel == ERREUR_OBSTACLE)) {
+void closeDoor() {
+  if (doorOpen && (currentDoorState == STOPPED || currentDoorState == OBSTACLE_ERROR)) {
     Serial.println(F("Début fermeture porte / Starting door closing"));
-    etatActuel = FERMETURE;
-    debutMouvementPorte = millis();
-    digitalWrite(MOTEUR_PIN1, LOW);
-    digitalWrite(MOTEUR_PIN2, HIGH);
+    currentDoorState = CLOSING;
+    doorMovementStart = millis();
+    digitalWrite(MOTOR_PIN1, LOW);
+    digitalWrite(MOTOR_PIN2, HIGH);
   }
 }
 
@@ -717,12 +717,12 @@ void fermerPorte() {
  * Paramètres / Parameters: Aucun / None
  * Retour / Return: void
  */
-void arreterMoteur() {
-  digitalWrite(MOTEUR_PIN1, LOW);
-  digitalWrite(MOTEUR_PIN2, LOW);
-  etatActuel = ARRET;
+void stopMotor() {
+  digitalWrite(MOTOR_PIN1, LOW);
+  digitalWrite(MOTOR_PIN2, LOW);
+  currentDoorState = STOPPED;
 }
-
+//--------------------------------- END TRANSLATION ---------------------------------------------------------------
 /**
  * Gère le mouvement de la porte et la détection d'obstacles
  * Manages door movement and obstacle detection
@@ -730,40 +730,40 @@ void arreterMoteur() {
  * Paramètres / Parameters: Aucun / None
  * Retour / Return: void
  */
-void gererMouvementPorte() {
-  switch (etatActuel) {
-    case OUVERTURE:
+void handleDoorMovement() {
+  switch (currentDoorState) {
+    case OPENING:
       // Vérifier timeout / Check timeout
-      if (millis() - debutMouvementPorte > (unsigned long)timeoutOuverture * 1000) {
-        Serial.println(F("Timeout ouverture - Obstacle détecté / Opening timeout - Obstacle detected"));
-        arreterMoteur();
-        etatActuel = ERREUR_OBSTACLE;
+      if (millis() - doorMovementStart > (unsigned long)openingTimeout * 1000) {
+        Serial.println("Timeout ouverture - Obstacle détecté / Opening timeout - Obstacle detected");
+        stopMotor();
+        currentDoorState = OBSTACLE_ERROR;
       }
       // Vérifier fin de course / Check limit switch
-      else if (digitalRead(FIN_COURSE_HAUT) == LOW) {
-        Serial.println(F("Porte complètement ouverte / Door fully open"));
-        arreterMoteur();
-        porteOuverte = true;
+      else if (digitalRead(TOP_LIMIT_SWITCH) == LOW) {
+        Serial.println("Porte complètement ouverte / Door fully open");
+        stopMotor();
+        doorOpen = true;
       }
       break;
       
-    case FERMETURE:
+    case CLOSING:
       // Vérifier timeout / Check timeout
-      if (millis() - debutMouvementPorte > (unsigned long)timeoutFermeture * 1000) {
-        Serial.println(F("Timeout fermeture - Obstacle détecté / Closing timeout - Obstacle detected"));
-        arreterMoteur();
-        etatActuel = ERREUR_OBSTACLE;
+      if (millis() - doorMovementStart > (unsigned long)closingTimeout * 1000) {
+        Serial.println("Timeout fermeture - Obstacle détecté / Closing timeout - Obstacle detected");
+        stopMotor();
+        currentDoorState = OBSTACLE_ERROR;
       }
       // Vérifier fin de course / Check limit switch
-      else if (digitalRead(FIN_COURSE_BAS) == LOW) {
-        Serial.println(F("Porte complètement fermée / Door fully closed"));
-        arreterMoteur();
-        porteOuverte = false;
+      else if (digitalRead(BOTTOM_LIMIT_SWITCH) == LOW) {
+        Serial.println("Porte complètement fermée / Door fully closed");
+        stopMotor();
+        doorOpen = false;
       }
       break;
       
-    case ARRET:
-    case ERREUR_OBSTACLE:
+    case STOPPED:
+    case OBSTACLE_ERROR:
       break;
   }
 }
@@ -780,32 +780,32 @@ void gererMouvementPorte() {
  *   - heureActuelle: int - Heure actuelle / Current hour
  * Retour / Return: void
  */
-void gererFermetureLumiere(int valeurLumiere, int heureActuelle) {
+void handleLightClosing(int lightValue, int currentHour) {
   // Vérifier si conditions sont réunies / Check if conditions are met
-  if (!porteOuverte || heureActuelle <= 7) {
-    lumiereFaibleDetectee = false;
-    debutLumiereFaible = 0;
+  if (!doorOpen || currentHour <= 7) {
+    lowLightDetected = false;
+    lowLightStartTime = 0;
     return;
   }
   
-  if (valeurLumiere < seuilLumiere) {
-    if (!lumiereFaibleDetectee) {
+  if (lightValue < lightThreshold) {
+    if (!lowLightDetected) {
       // Début de la temporisation / Start of delay
-      lumiereFaibleDetectee = true;
-      debutLumiereFaible = millis();
-      Serial.println(F("Début détection lumière faible - temporisation 10 minutes / Start low light detection - 10 minutes delay"));
-    } else if (millis() - debutLumiereFaible >= TEMPO_FERMETURE) {
+      lowLightDetected = true;
+      lowLightStartTime = millis();
+      Serial.println("Début détection lumière faible - temporisation 10 minutes / Start low light detection - 10 minutes delay");
+    } else if (millis() - lowLightStartTime >= CLOSING_DELAY) {
       // Temporisation écoulée / Delay elapsed
-      Serial.println(F("Temporisation écoulée - Fermeture automatique / Delay elapsed - Automatic closing"));
-      fermerPorte();
-      lumiereFaibleDetectee = false;
+      Serial.println("Temporisation écoulée - Fermeture automatique / Delay elapsed - Automatic closing");
+      closeDoor();
+      lowLightDetected = false;
     }
   } else {
     // La lumière est revenue / Light has returned
-    if (lumiereFaibleDetectee) {
-      Serial.println(F("Lumière revenue - Annulation temporisation fermeture / Light returned - Closing delay cancelled"));
-      lumiereFaibleDetectee = false;
-      debutLumiereFaible = 0;
+    if (lowLightDetected) {
+      Serial.println("Lumière revenue - Annulation temporisation fermeture / Light returned - Closing delay cancelled");
+      lowLightDetected = false;
+      lowLightStartTime = 0;
     }
   }
 }
@@ -820,16 +820,16 @@ void gererFermetureLumiere(int valeurLumiere, int heureActuelle) {
  * Paramètres / Parameters: Aucun / None
  * Retour / Return: void
  */
-void gererLEDCoupure() {
-  if (coupureCourant) {
+void handlePowerOutageLED() {
+  if (powerOutage) {
     // Faire clignoter la LED toutes les 500ms / Blink LED every 500ms
-    if (millis() - dernierTempsLED > 500) {
-      dernierTempsLED = millis();
-      etatLED = !etatLED;
-      digitalWrite(LED_COUPURE, etatLED);
+    if (millis() - lastLEDTime > 500) {
+      lastLEDTime = millis();
+      ledState = !ledState;
+      digitalWrite(POWER_OUTAGE_LED, ledState);
     }
   } else {
-    digitalWrite(LED_COUPURE, LOW);
+    digitalWrite(POWER_OUTAGE_LED, LOW);
   }
 }
 
@@ -861,7 +861,7 @@ void gererLEDCoupure() {
  * CONTACT ET SUPPORT / CONTACT AND SUPPORT
  * ============================================================================
  * 
- * GitHub: https://github.com/[votre-username]/poulailler-automatique
+ * GitHub: https://github.com/fbaillon19/poulailler-automatique
  * Issues: Pour les bugs et suggestions / For bugs and suggestions
  * Wiki: Documentation détaillée / Detailed documentation
  * 
