@@ -4,7 +4,7 @@
 
 ![Badge Arduino](https://img.shields.io/badge/Arduino-Nano-blue)
 ![Badge Licence](https://img.shields.io/badge/License-MIT-green)
-![Badge Version](https://img.shields.io/badge/Version-1.0-orange)
+![Badge Version](https://img.shields.io/badge/Version-1.1.0-orange)
 
 [🇫🇷 Version française](README.md) | [🇺🇸 English version](README_EN.md)
 
@@ -17,11 +17,13 @@
 ### 🕐 Gestion automatique
 - **Ouverture automatique à 7h00** du matin
 - **Fermeture par détection de luminosité** (avec temporisation 10 min anti-nuages)
+- **Hystérésis du capteur de lumière** (évite les oscillations près du seuil)
 - **Fermeture forcée à 23h00** (sécurité)
 - **Système anti-obstacle** avec timeout configurable
 
 ### 🎛️ Interface utilisateur
 - **Écran LCD 16x2** : affichage heure + statut porte
+- **Rétroéclairage intelligent** : extinction automatique après 30s (60s la nuit)
 - **Bouton multifonction** :
   - Appui bref : ouvrir/fermer manuellement
   - Appui long : accès aux réglages
@@ -32,6 +34,11 @@
 - **Détection d'obstacles** avec timeout moteur
 - **Sauvegarde EEPROM** des paramètres
 - **LED d'alerte** coupure de courant
+
+### ⚡ Optimisations
+- **Économie d'énergie** : rétroéclairage LCD avec extinction auto
+- **Optimisation RAM** : utilisation de la mémoire FLASH pour les chaînes
+- **Stabilité** : hystérésis pour éviter les détections erratiques
 
 ## 🔧 Matériel requis
 
@@ -66,6 +73,26 @@ GND             →    Masse commune
 
 *Schéma Fritzing détaillé : [`schemas/schema_cablage.fzz`](schemas/)*
 
+## 🆕 Nouveautés Version 1.1.0
+
+### 🔆 Gestion intelligente du rétroéclairage LCD
+- **Extinction automatique** après 30 secondes d'inactivité
+- **Mode nuit** : extinction après 1 minute entre 22h et 6h
+- **Réveil automatique** lors de toute interaction (bouton, mouvement porte)
+- **Économie d'énergie** et préservation de la durée de vie du LCD
+
+### 📊 Amélioration capteur de luminosité
+- **Hystérésis configurable** (constante `LIGHT_HYSTERESIS = 20`)
+- **Évite les oscillations** quand la lumière est proche du seuil
+- **Plus stable** : pas de déclenchements intempestifs au crépuscule
+- **Logs améliorés** avec affichage des valeurs détectées
+
+### 🐛 Corrections de bugs
+- Correction du timeout mode réglage qui ne se réinitialisait pas
+- Correction du freeze d'affichage en mode réglage timeout
+- Ajout des accolades obligatoires dans le switch/case
+- Optimisation RAM avec macro `F()` sur toutes les chaînes
+
 ## 🚀 Installation
 
 ### 1. Prérequis Arduino IDE
@@ -90,6 +117,28 @@ cd poulailler-automatique
 1. Régler l'heure : **Appui long → Naviguer avec appuis brefs → Appui long suivant**
 2. Ajuster le seuil de luminosité selon votre environnement
 3. Tester les timeouts moteur selon votre installation
+
+## ⚙️ Configuration avancée
+
+### Paramètres configurables dans le code
+
+Si vous souhaitez personnaliser le comportement, vous pouvez modifier ces constantes en début de code :
+```cpp
+// Temporisation fermeture lumière faible
+const unsigned long CLOSING_DELAY = 600000;      // 10 minutes (défaut)
+
+// Timeouts rétroéclairage LCD
+const unsigned long BACKLIGHT_TIMEOUT = 30000;   // 30s en journée
+const unsigned long BACKLIGHT_NIGHT_OFF = 60000; // 60s la nuit
+
+// Hystérésis capteur luminosité
+const int LIGHT_HYSTERESIS = 20;                 // Recommandé: 10-30
+```
+Hystérésis du capteur de lumière :
+
+Valeur 10 : Plus sensible, peut osciller
+Valeur 20 : Recommandé - Bon compromis
+Valeur 30 : Très stable, moins réactif
 
 ## 📱 Utilisation
 

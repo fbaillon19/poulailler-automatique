@@ -4,7 +4,7 @@
 
 ![Badge Arduino](https://img.shields.io/badge/Arduino-Nano-blue)
 ![Badge License](https://img.shields.io/badge/License-MIT-green)
-![Badge Version](https://img.shields.io/badge/Version-1.0-orange)
+![Badge Version](https://img.shields.io/badge/Version-1.1.0-orange)
 
 [🇫🇷 Version française](README_FR.md) | [🇺🇸 English version](README_EN.md)
 
@@ -17,11 +17,13 @@
 ### 🕐 Automatic Management
 - **Automatic opening at 7:00 AM** every morning
 - **Light-triggered closing** (with 10-min delay to avoid cloud interference)
+- **Light sensor hysteresis** (avoids oscillations near threshold)
 - **Forced closing at 11:00 PM** (safety feature)
 - **Anti-jam system** with configurable timeout
 
 ### 🎛️ User Interface
 - **16x2 LCD display**: Shows time + door status
+- **Smart backlight**: Auto turn-off after 30s (60s at night)
 - **Multi-function button**:
   - Short press: Manual open/close
   - Long press: Access settings menu
@@ -32,6 +34,11 @@
 - **Obstacle detection** with motor timeout
 - **EEPROM parameter backup**
 - **Power outage alert LED**
+
+### ⚡ Optimizations
+- **Power saving**: LCD backlight with auto turn-off
+- **RAM optimization**: Using FLASH memory for strings
+- **Stability**: Hysteresis to avoid erratic detections
 
 ## 🔧 Required Hardware
 
@@ -66,6 +73,26 @@ GND             →    Common ground
 
 *Detailed Fritzing schematic: [`schemas/wiring_diagram.fzz`](schemas/)*
 
+## 🆕 What's New in Version 1.1.0
+
+### 🔆 Smart LCD Backlight Management
+- **Auto turn-off** after 30 seconds of inactivity
+- **Night mode**: Turn-off after 1 minute between 10pm and 6am
+- **Auto wake-up** on any interaction (button press, door movement)
+- **Power saving** and LCD lifespan preservation
+
+### 📊 Light Sensor Improvement
+- **Configurable hysteresis** (constant `LIGHT_HYSTERESIS = 20`)
+- **Avoids oscillations** when light is near threshold
+- **More stable**: No false triggers at twilight
+- **Enhanced logs** with detected values display
+
+### 🐛 Bug Fixes
+- Fixed settings mode timeout not resetting properly
+- Fixed display freeze in timeout settings mode
+- Added mandatory braces in switch/case statements
+- RAM optimization with `F()` macro on all strings
+
 ## 🚀 Installation
 
 ### 1. Arduino IDE Requirements
@@ -90,6 +117,28 @@ cd poulailler-automatique
 1. Set time: **Long press → Navigate with short presses → Long press next**
 2. Adjust light threshold for your environment
 3. Test motor timeouts according to your installation
+
+## ⚙️ Advanced Configuration
+
+### Configurable parameters in code
+
+If you want to customize the behavior, you can modify these constants at the beginning of the code:
+```cpp
+// Low light closing delay
+const unsigned long CLOSING_DELAY = 600000;      // 10 minutes (default)
+
+// LCD backlight timeouts
+const unsigned long BACKLIGHT_TIMEOUT = 30000;   // 30s during day
+const unsigned long BACKLIGHT_NIGHT_OFF = 60000; // 60s at night
+
+// Light sensor hysteresis
+const int LIGHT_HYSTERESIS = 20;                 // Recommended: 10-30
+```
+Light sensor hysteresis:
+
+Value 10: More sensitive, may oscillate
+Value 20: Recommended - Good compromise
+Value 30: Very stable, less reactive
 
 ## 📱 Usage
 
