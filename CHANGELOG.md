@@ -1,44 +1,131 @@
-# Changelog
+# 📝 Changelog - Poulailler Automatique
 
-All notable changes to this project will be documented in this file.
+Toutes les modifications notables de ce projet sont documentées dans ce fichier.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/),
+et ce projet adhère au [Versionnage Sémantique](https://semver.org/lang/fr/).
 
-## [1.1.0] - 2025-01-XX
+---
 
-### Added
-- 🔆 Automatic LCD backlight management with configurable timeouts
-- 🔆 Night mode for backlight (longer timeout between 10pm-6am)
-- 📊 Light sensor hysteresis to avoid oscillations (`LIGHT_HYSTERESIS` constant)
-- 📝 Enhanced Serial debug messages with sensor values
-- 💾 F() macro on all string literals for RAM optimization
+## [1.2.0] - 2025-12-25
 
-### Fixed
-- 🐛 Settings mode timeout now properly resets on each user action
-- 🐛 Display freeze when entering timeout configuration modes
-- 🐛 Added mandatory braces in switch/case with local variable declarations
-- 🐛 Light sensor oscillations near threshold value
+### 🎉 Ajouté
+- **Architecture modulaire** : Séparation en fichiers `button.h` et `button.cpp`
+- **Bibliothèque OneButton** : Gestion professionnelle des événements bouton
+- **Messages debug Serial** : Traces détaillées pour chaque action
+- **Documentation v1.2.0** : Guide d'installation et utilisation OneButton
+- **Rallumage automatique LCD** : Lors de chaque transition de mode
+- **Définitions enum explicites** : Valeurs 0-5 pour éviter ambiguïtés
 
-### Changed
-- ⚡ Backlight turns off after 30s inactivity (60s at night)
-- ⚡ Settings timeout now uses `lastActivity` instead of `settingsModeStart`
-- 📊 Light closing logic now uses hysteresis thresholds
+### 🔧 Modifié
+- **Gestion du bouton** : Passage de code manuel à OneButton (callbacks)
+- **Structure du code** : 1 fichier monolithique → 3 fichiers modulaires
+- **Timing bouton** : 
+  - Appui long : 3000ms
+  - Clic : 250ms max
+  - Double-clic : 500ms entre clics
+- **Fonction `gererAffichageLCD()`** : Scope local avec accolades dans `case MODE_REGLAGE_SEUIL`
 
-## [1.0.0] - 2025-01-XX
+### 🐛 Corrigé
+- **Bug affichage modes timeout** : L'enum n'était pas visible dans tous les fichiers
+  - Solution : Définition explicite dans `button.h` avec valeurs `= 0, = 1...`
+- **LCD ne s'affichait pas** : Problème de scope dans switch/case
+  - Solution : Ajout d'accolades `{}` autour des case avec variables locales
+- **LCD s'éteignait en mode réglage** : Timeout inactivité se déclenchait
+  - Solution : Appel `allumerLCD()` à chaque transition de mode
+- **Méthode OneButton** : `setIdleTicks()` n'existe pas
+  - Solution : Utilisation de `setIdleMs()` à la place
 
-### Added
-- ✅ Automatic opening at 7:00 AM
-- ✅ Light-based closing with 10-minute anti-cloud delay
-- ✅ Forced closing at 11:00 PM
-- ✅ Complete LCD 16x2 interface
-- ✅ Multi-function button management
-- ✅ Anti-jam system with configurable timeouts
-- ✅ EEPROM parameter storage
-- ✅ Power outage alert LED
-- ✅ Complete bilingual documentation (FR/EN)
-- ✅ Wiring diagrams and component lists
-- ✅ Mechanical assembly guide
+### 📚 Documentation
+- Ajout README_v1.2.0.md avec guide OneButton
+- Mise à jour README.md principal
+- Ajout section troubleshooting compilation
 
-[1.1.0]: https://github.com/fbaillon19/poulailler-automatique/compare/v1.0.0...v1.1.0
-[1.0.0]: https://github.com/fbaillon19/poulailler-automatique/releases/tag/v1.0.0
+### 🔍 Débogage amélioré
+- Messages Serial pour chaque événement bouton
+- Affichage mode actuel lors des transitions
+- Logs détaillés des actions utilisateur
+
+---
+
+## [1.1.0] - 2025-12-24
+
+### 🎉 Ajouté
+- **Gestion rétroéclairage LCD** : Extinction automatique après 30s d'inactivité
+- **Réveil automatique LCD** : Toutes les minutes pendant temporisation fermeture
+- **Double-clic** : Éteindre manuellement le LCD
+- **Variable `derniereActivite`** : Tracking inactivité utilisateur
+- **Constante `TIMEOUT_LCD`** : 30 secondes configurable
+
+### 🔧 Modifié
+- **Gestion bouton** : Ajout détection double-clic (500ms)
+- **Fonction `allumerLCD()`** : Met à jour `derniereActivite`
+- **Loop principale** : Logique extinction automatique LCD
+
+### 🐛 Corrigé
+- **LCD restait allumé** : Ajout timeout inactivité
+- **Pas de réveil pendant temporisation** : Timer 1 minute ajouté
+- **Consommation énergie** : LCD s'éteint la nuit
+
+---
+
+## [1.0.0] - 2025-12-20
+
+### 🎉 Version initiale
+- **Ouverture automatique** à 7h00
+- **Fermeture luminosité** avec temporisation 10 minutes anti-nuages
+- **Fermeture forcée** à 23h00
+- **Interface LCD 16x2** : Affichage heure + statut
+- **Bouton multifonction** :
+  - Appui bref : Ouvrir/fermer manuellement
+  - Appui long : Accès réglages
+- **Système anti-obstacle** : Timeout moteur configurable
+- **Sauvegarde EEPROM** : Seuil luminosité, timeouts
+- **LED alerte** : Clignotement si coupure courant RTC
+- **Capteurs fin de course** : Haut et bas
+- **Modes de réglage** :
+  - Heure
+  - Minutes
+  - Seuil luminosité
+  - Timeout ouverture
+  - Timeout fermeture
+- **RTC DS3231** : Horloge temps réel précise
+- **Gestion I2C** : LCD + RTC sur même bus
+- **Documentation complète** : 
+  - Guide câblage
+  - Liste composants
+  - Guide montage mécanique
+  - Schémas Fritzing
+
+---
+
+## [Non publié] - En développement
+
+### 🚀 Prévu pour futures versions
+- [ ] Module WiFi ESP32 pour contrôle distant
+- [ ] Application mobile iOS/Android
+- [ ] Capteur de température DHT22
+- [ ] Historique EEPROM des ouvertures/fermetures
+- [ ] Mode manuel permanent (bypass automatique)
+- [ ] Calibration automatique seuil luminosité
+- [ ] Notification push en cas d'erreur
+- [ ] Alimentation solaire + batterie
+- [ ] Multi-langues (FR/EN)
+- [ ] Écran OLED au lieu de LCD
+
+---
+
+## Types de changements
+
+- `Ajouté` : Nouvelles fonctionnalités
+- `Modifié` : Changements de fonctionnalités existantes
+- `Obsolète` : Fonctionnalités bientôt retirées
+- `Supprimé` : Fonctionnalités retirées
+- `Corrigé` : Corrections de bugs
+- `Sécurité` : Corrections de vulnérabilités
+
+---
+
+**[1.2.0]** : https://github.com/votre-username/poulailler-automatique/releases/tag/v1.2.0  
+**[1.1.0]** : https://github.com/votre-username/poulailler-automatique/releases/tag/v1.1.0  
+**[1.0.0]** : https://github.com/votre-username/poulailler-automatique/releases/tag/v1.0.0
