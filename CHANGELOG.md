@@ -7,6 +7,42 @@ et ce projet adhère au [Versionnage Sémantique](https://semver.org/lang/fr/).
 
 ---
 
+## [1.3.0] - 2025-12-26
+
+### 🎉 Ajouté
+- **Encodeur rotatif KY-040** : Interface professionnelle et intuitive
+- **Bibliothèque Encoder** : Utilisation de la bibliothèque de Paul Stoffregen (ultra-fiable)
+- **Rotation pour modifier valeurs** : Tourner CW/CCW pour incrémenter/décrémenter (±1 par cran)
+- **Architecture procédurale** : Code simplifié sans POO
+- **Condensateurs 100nF** : Recommandation pour filtrage encodeur (CLK-GND, DT-GND)
+- **Messages Serial détaillés** : Debug complet avec indication direction rotation
+
+### 🔧 Modifié
+- **Click bref** : Ouvrir/fermer porte (ou rallumer LCD)
+- **Click long** : Navigation modes réglage (3 secondes)
+- **Suppression double-click** : Remplacé par rotation encodeur
+- **Pins utilisées** : CLK=D2, DT=D4, SW=D5
+- **Timeout réglage** : 30s (au lieu de 60s) avec extinction LCD
+- **Rafraîchissement LCD** : Throttlé à 200ms pour éviter blocages
+
+### 🐛 Corrigé
+- **Bug double-click** : Supprimé complètement (remplacé par rotation)
+- **Blocages LCD** : Plus de problèmes de timing avec OneButton
+- **Direction rotation** : Sens horaire (CW) incrémente correctement
+- **Déclarations forward** : Ajout prototypes fonctions pour compilation
+
+### 🗑️ Supprimé
+- **Bibliothèque OneButton** : Plus nécessaire
+- **Gestion manuelle interruptions** : Déléguée à bibliothèque Encoder
+- **Code complexe timing bouton** : Simplifié grâce à Encoder
+
+### 📚 Documentation
+- Ajout README_v1.3.0.md avec guide encodeur KY-040
+- Mise à jour README.md principal
+- Section troubleshooting encodeur rotatif
+
+---
+
 ## [1.2.0] - 2025-12-25
 
 ### 🎉 Ajouté
@@ -126,6 +162,7 @@ et ce projet adhère au [Versionnage Sémantique](https://semver.org/lang/fr/).
 
 ---
 
-**[1.2.0]** : https://github.com/votre-username/poulailler-automatique/releases/tag/v1.2.0  
-**[1.1.0]** : https://github.com/votre-username/poulailler-automatique/releases/tag/v1.1.0  
-**[1.0.0]** : https://github.com/votre-username/poulailler-automatique/releases/tag/v1.0.0
+**[1.3.0]** : https://github.com/fbaillon19/poulailler-automatique/releases/tag/v1.3.0  
+**[1.2.0]** : https://github.com/fbaillon19/poulailler-automatique/releases/tag/v1.2.0  
+**[1.1.0]** : https://github.com/fbaillon19/poulailler-automatique/releases/tag/v1.1.0  
+**[1.0.0]** : https://github.com/fbaillon19/poulailler-automatique/releases/tag/v1.0.0
