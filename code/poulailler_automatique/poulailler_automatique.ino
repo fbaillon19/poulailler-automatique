@@ -1,29 +1,33 @@
 /*
  * ============================================================================
- * POULAILLER AUTOMATIQUE / AUTOMATIC CHICKEN COOP DOOR
+ * POULAILLER AUTOMATIQUE v1.3.0 - Avec Encodeur Rotatif KY-040
  * ============================================================================
  * 
- * Description FR: Système automatisé d'ouverture/fermeture de porte de 
- *                 poulailler basé sur Arduino Nano avec gestion de l'heure 
- *                 et de la luminosité
- * 
- * Description EN: Automated chicken coop door system based on Arduino Nano 
- *                 with time and light level management
+ * Description: Système automatisé de porte de poulailler avec interface
+ *              encodeur rotatif pour configuration intuitive
  * 
  * Auteur / Author: Frédéric BAILLON
- * Version: 1.2.0 (refactorisée avec OneButton / refactored with OneButton)
- * Date: 2025
+ * Version: 1.3.0
+ * Date: Décembre 2025
  * Licence / License: MIT
  * 
- * Repo GitHub: https://github.com/[votre-username]/poulailler-automatique
+ * ============================================================================
+ * NOUVEAUTÉS v1.3.0:
+ * ============================================================================
+ * 
+ * - Encodeur rotatif KY-040 pour navigation intuitive
+ * - Rotation pour modifier les valeurs (heure, seuil, timeouts)
+ * - Click bref : ouvrir/fermer porte (ou rallumer LCD)
+ * - Click long : navigation dans les modes de réglage
+ * - Timeout réglage 30s avec extinction automatique LCD
+ * - Simplification du code et meilleure réactivité
  * 
  * ============================================================================
- * BIBLIOTHÈQUES REQUISES / REQUIRED LIBRARIES:
+ * BIBLIOTHÈQUES REQUISES:
  * ============================================================================
  * 
  * - RTClib (Adafruit)
  * - LiquidCrystal_I2C
- * - OneButton (Matthias Hertel)
  * 
  * ============================================================================
  */
@@ -32,161 +36,165 @@
 #include <RTClib.h>
 #include <LiquidCrystal_I2C.h>
 #include <EEPROM.h>
-#include <OneButton.h>
-#include "button.h"
+#include "rotary_encoder.h"
 
 // ============================================================================
 // CONFIGURATION DES BROCHES / PIN CONFIGURATION
 // ============================================================================
-const int MOTEUR_PIN1 = 7;        // Contrôle moteur direction 1 / Motor control direction 1
-const int MOTEUR_PIN2 = 6;        // Contrôle moteur direction 2 / Motor control direction 2
-const int CAPTEUR_LUMIERE = A0;   // Capteur de luminosité / Light sensor
-const int FIN_COURSE_HAUT = 8;    // Capteur fin de course haut / TOP limit switch
-const int FIN_COURSE_BAS = 9;     // Capteur fin de course bas / BOTTOM limit switch
-const int LED_COUPURE = 3;        // LED clignotante coupure courant / Power outage blinking LED
+const int MOTEUR_PIN1 = 7;        // Contrôle moteur direction 1
+const int MOTEUR_PIN2 = 6;        // Contrôle moteur direction 2
+const int CAPTEUR_LUMIERE = A0;   // Capteur de luminosité
+const int FIN_COURSE_HAUT = 8;    // Fin de course HAUT
+const int FIN_COURSE_BAS = 9;     // Fin de course BAS
+const int LED_COUPURE = 3;        // LED alerte coupure courant
+
+// Pins encodeur rotatif (définis dans rotary_encoder.cpp):
+// ENCODER_CLK = 2 (interruption)
+// ENCODER_DT = 4
+// ENCODER_SW = 5
 
 // ============================================================================
 // CONSTANTES / CONSTANTS
 // ============================================================================
-const unsigned long TEMPO_FERMETURE = 600000; // 10 minutes en millisecondes / 10 minutes in milliseconds
-const unsigned long TIMEOUT_REGLAGE = 10000;  // 10 secondes timeout mode réglage / 10 seconds settings timeout
-const unsigned long INTERVAL_AFFICHAGE_MINUTE = 60000; // 1 minute pour réveil LCD / 1 minute for LCD wake-up
-const unsigned long TIMEOUT_LCD = 30000;      // 30 secondes d'inactivité avant extinction LCD / 30 seconds inactivity before LCD off
+const unsigned long TEMPO_FERMETURE = 600000;  // 10 minutes
+const unsigned long TIMEOUT_REGLAGE = 30000;   // 30 secondes timeout réglage
+const unsigned long INTERVAL_AFFICHAGE_MINUTE = 60000; // 1 minute réveil LCD
+const unsigned long TIMEOUT_LCD = 30000;       // 30 secondes avant extinction LCD
+const unsigned long INTERVALLE_RAFRAICHISSEMENT_LCD = 200; // Rafraîchir LCD toutes les 200ms
 
-// Adresses EEPROM / EEPROM addresses
-const int SEUIL_EEPROM_ADDR = 0;              // Adresse EEPROM seuil / EEPROM address for threshold
-const int TIMEOUT_OUVERTURE_ADDR = 2;        // Adresse EEPROM timeout ouverture / EEPROM address opening timeout
-const int TIMEOUT_FERMETURE_ADDR = 4;        // Adresse EEPROM timeout fermeture / EEPROM address closing timeout
+// Adresses EEPROM
+const int SEUIL_EEPROM_ADDR = 0;
+const int TIMEOUT_OUVERTURE_ADDR = 2;
+const int TIMEOUT_FERMETURE_ADDR = 4;
 
-// Valeurs par défaut / Default values
-const int SEUIL_DEFAULT = 300;                // Valeur par défaut seuil / Default threshold value
-const int TIMEOUT_OUVERTURE_DEFAULT = 15;    // 15 secondes par défaut / 15 seconds default
-const int TIMEOUT_FERMETURE_DEFAULT = 30;    // 30 secondes par défaut / 30 seconds default
+// Valeurs par défaut
+const int SEUIL_DEFAULT = 300;
+const int TIMEOUT_OUVERTURE_DEFAULT = 15;
+const int TIMEOUT_FERMETURE_DEFAULT = 30;
 
 // ============================================================================
 // VARIABLES GLOBALES / GLOBAL VARIABLES
 // ============================================================================
-RTC_DS3231 rtc;                              // Objet RTC / RTC object
-LiquidCrystal_I2C lcd(0x27, 16, 2);         // Écran LCD I2C / I2C LCD display
-bool porteOuverte = false;                   // État de la porte / Door state
-unsigned long dernierTempsLED = 0;          // Dernier changement LED / Last LED change
-bool etatLED = false;                        // État LED / LED state
-bool coupureCourant = false;                 // Détection coupure courant / Power outage detection
-unsigned long dernierTimeCheck = 0;         // Dernière vérification temporelle / Last time check
-int seuilLumiere = SEUIL_DEFAULT;           // Seuil de luminosité / Light threshold
-int timeoutOuverture = TIMEOUT_OUVERTURE_DEFAULT;  // Timeout ouverture en secondes / Opening timeout in seconds
-int timeoutFermeture = TIMEOUT_FERMETURE_DEFAULT;  // Timeout fermeture en secondes / Closing timeout in seconds
+RTC_DS3231 rtc;
+LiquidCrystal_I2C lcd(0x27, 16, 2);
 
-// Variables pour la temporisation de fermeture / Variables for closing delay
-unsigned long debutLumiereFaible = 0;       // Début détection lumière faible / Start of low light detection
-bool lumiereFaibleDetectee = false;         // Flag lumière faible / Low light flag
+bool porteOuverte = false;
+unsigned long dernierTempsLED = 0;
+bool etatLED = false;
+bool coupureCourant = false;
+unsigned long dernierTimeCheck = 0;
 
-// Variables pour les modes de réglage / Settings mode variables
-ModeReglage modeActuel = MODE_NORMAL;        // Mode actuel / Current mode
-unsigned long debutModeReglage = 0;         // Début mode réglage / Settings mode start
-bool clignotement = false;                   // État clignotement / Blinking state
-unsigned long dernierClignotement = 0;      // Dernier clignotement / Last blink
-ModeReglage dernierModeAffiche = MODE_NORMAL; // Pour debug: dernier mode affiché
+int seuilLumiere = SEUIL_DEFAULT;
+int timeoutOuverture = TIMEOUT_OUVERTURE_DEFAULT;
+int timeoutFermeture = TIMEOUT_FERMETURE_DEFAULT;
 
-// Variables pour la gestion du rétroéclairage LCD / LCD backlight management variables
-bool lcdAllume = true;                       // État rétroéclairage LCD / LCD backlight state
-unsigned long dernierAllumageMinute = 0;    // Dernier allumage minute temporisation / Last minute display activation
-unsigned long derniereActivite = 0;         // Dernière activité utilisateur ou système / Last user or system activity
+// Temporisation fermeture
+unsigned long debutLumiereFaible = 0;
+bool lumiereFaibleDetectee = false;
 
-// États de la porte / Door states
-EtatPorte etatActuel = ARRET;               // État actuel porte / Current door state
+// Modes de réglage
+ModeReglage modeActuel = MODE_NORMAL;
+unsigned long debutModeReglage = 0;
+bool clignotement = false;
+unsigned long dernierClignotement = 0;
 
-// Variables pour la gestion des timeouts moteur / Motor timeout variables
-unsigned long debutMouvementPorte = 0;     // Début mouvement porte / Door movement start
+// Gestion LCD
+bool lcdAllume = true;
+unsigned long dernierAllumageMinute = 0;
+unsigned long derniereActivite = 0;
+unsigned long dernierRafraichissementLCD = 0;
+
+// États porte
+EtatPorte etatActuel = ARRET;
+unsigned long debutMouvementPorte = 0;
 
 // ============================================================================
-// FONCTION SETUP - INITIALISATION / SETUP FUNCTION - INITIALIZATION
+// SETUP
 // ============================================================================
 void setup() {
   Serial.begin(9600);
   
-  // Configuration des broches / Pin configuration
+  // Configuration pins
   pinMode(MOTEUR_PIN1, OUTPUT);
   pinMode(MOTEUR_PIN2, OUTPUT);
   pinMode(FIN_COURSE_HAUT, INPUT_PULLUP);
   pinMode(FIN_COURSE_BAS, INPUT_PULLUP);
   pinMode(LED_COUPURE, OUTPUT);
   
-  // Arrêt du moteur au démarrage / Stop motor at startup
   arreterMoteur();
   
-  // Initialisation du LCD / LCD initialization
+  // Initialisation LCD
   lcd.init();
   lcd.backlight();
   lcdAllume = true;
   lcd.setCursor(0, 0);
-  lcd.print(F("Poulailler Auto"));
+  lcd.print(F("Poulailler v1.3"));
   lcd.setCursor(0, 1);
-  lcd.print(F("Init OneButton.."));
+  lcd.print(F("Encodeur KY-040"));
   delay(2000);
   
-  // Initialisation du bouton avec OneButton / Button initialization with OneButton
-  initButton();
+  // Initialisation encodeur rotatif
+  initRotaryEncoder();
   
   lcd.setCursor(0, 1);
-  lcd.print(F("Initialisation.."));
-  delay(1000);
+  lcd.print(F("Init RTC...     "));
   
-  // Initialisation du RTC / RTC initialization
+  // Initialisation RTC
   if (!rtc.begin()) {
     lcd.clear();
     lcd.setCursor(0, 0);
     lcd.print(F("Erreur RTC!"));
-    Serial.println(F("RTC non trouvé ! / RTC not found!"));
+    Serial.println(F("RTC non trouvé !"));
     while (1);
   }
   
-  // Chargement des paramètres depuis l'EEPROM / Load parameters from EEPROM
+  // Charger paramètres EEPROM
   chargerParametresEEPROM();
   
-  // Vérification si le RTC a perdu l'alimentation / Check if RTC lost power
+  // Vérifier perte alimentation RTC
   if (rtc.lostPower()) {
     coupureCourant = true;
-    Serial.println(F("RTC a perdu l'alimentation / RTC lost power"));
+    Serial.println(F("RTC a perdu l'alimentation"));
   }
   
-  // Déterminer l'état initial de la porte / Determine initial door state
+  // Déterminer état initial porte
   if (digitalRead(FIN_COURSE_HAUT) == LOW) {
     porteOuverte = true;
-    Serial.println(F("Porte détectée ouverte au démarrage / Door detected open at startup"));
+    Serial.println(F("Porte ouverte au démarrage"));
   } else if (digitalRead(FIN_COURSE_BAS) == LOW) {
     porteOuverte = false;
-    Serial.println(F("Porte détectée fermée au démarrage / Door detected closed at startup"));
+    Serial.println(F("Porte fermée au démarrage"));
   }
   
-  Serial.println(F("Système initialisé / System initialized"));
+  Serial.println(F("Système initialisé"));
   lcd.clear();
-  derniereActivite = millis(); // Initialiser le timer d'activité
+  derniereActivite = millis();
 }
 
 // ============================================================================
-// BOUCLE PRINCIPALE / MAIN LOOP
+// LOOP
 // ============================================================================
 void loop() {
   DateTime maintenant = rtc.now();
   
-  // Gestion du bouton avec OneButton / Button management with OneButton
-  updateButton();
+  // Mise à jour encodeur rotatif
+  updateRotaryEncoder();
   
-  // Gestion du timeout pour sortir du mode réglage / Settings mode timeout management
+  // Timeout mode réglage → retour mode normal + extinction LCD
   if (modeActuel != MODE_NORMAL && millis() - debutModeReglage > TIMEOUT_REGLAGE) {
+    Serial.println(F("Timeout réglage → MODE_NORMAL"));
     modeActuel = MODE_NORMAL;
     lcd.clear();
+    eteindreLCD();
   }
   
-  // Gestion du clignotement en mode réglage / Blinking management in settings mode
+  // Clignotement en mode réglage
   if (millis() - dernierClignotement > 500) {
     dernierClignotement = millis();
     clignotement = !clignotement;
   }
   
-  // Gestion du réveil automatique du LCD pendant la temporisation
-  // Automatic LCD wake-up management during closing delay
+  // Réveil automatique LCD pendant temporisation fermeture
   if (lumiereFaibleDetectee && !lcdAllume) {
     if (millis() - dernierAllumageMinute >= INTERVAL_AFFICHAGE_MINUTE) {
       allumerLCD();
@@ -194,85 +202,81 @@ void loop() {
     }
   }
   
-  // Extinction automatique du LCD après inactivité
-  // Automatic LCD shutdown after inactivity
+  // Extinction automatique LCD (seulement en mode normal)
   if (lcdAllume && 
       modeActuel == MODE_NORMAL && 
       etatActuel == ARRET && 
       !lumiereFaibleDetectee && 
       (millis() - derniereActivite > TIMEOUT_LCD)) {
-    Serial.println(F(">>> Extinction auto LCD (inactivité)"));
+    Serial.println(F("Extinction auto LCD"));
     eteindreLCD();
   }
   
-  // Gestion de l'affichage LCD / LCD display management
-  if (lcdAllume) {
+  // Rafraîchissement LCD (throttlé à 200ms)
+  if (lcdAllume && (millis() - dernierRafraichissementLCD >= INTERVALLE_RAFRAICHISSEMENT_LCD)) {
+    dernierRafraichissementLCD = millis();
     gererAffichageLCD(maintenant);
   }
   
-  // Gestion de la LED de coupure / Power outage LED management
+  // Gestion LED coupure
   gererLEDCoupure();
   
-  // Logique automatique seulement en mode normal / Automatic logic only in normal mode
+  // Logique automatique (seulement en mode normal)
   if (modeActuel == MODE_NORMAL) {
-    // Vérifications automatiques toutes les secondes / Automatic checks every second
     if (millis() - dernierTimeCheck > 1000) {
       dernierTimeCheck = millis();
       
       int valeurLumiere = analogRead(CAPTEUR_LUMIERE);
       
-      // Condition 1: Ouverture automatique à 7h00 / Automatic opening at 7:00 AM
+      // Ouverture automatique 7h00
       if (maintenant.hour() == 7 && maintenant.minute() == 0 && !porteOuverte) {
-        Serial.println(F("7h00 - Ouverture automatique / 7:00 AM - Automatic opening"));
+        Serial.println(F("7h00 - Ouverture automatique"));
         ouvrirPorte();
       }
       
-      // Condition 2: Fermeture avec temporisation / Closing with delay
+      // Fermeture avec temporisation
       gererFermetureLumiere(valeurLumiere, maintenant.hour());
       
-      // Condition 3: Fermeture forcée à 23h00 / Forced closing at 11:00 PM
+      // Fermeture forcée 23h00
       if (maintenant.hour() == 23 && maintenant.minute() == 0 && porteOuverte) {
-        Serial.println(F("23h00 - Fermeture forcée / 11:00 PM - Forced closing"));
+        Serial.println(F("23h00 - Fermeture forcée"));
         fermerPorte();
       }
     }
     
-    // Gestion du mouvement de la porte / Door movement management
+    // Gestion mouvement porte
     gererMouvementPorte();
   }
   
-  delay(50);
+  delay(10); // Loop rapide pour encoder rotatif
 }
 
 // ============================================================================
-// GESTION DU RÉTROÉCLAIRAGE LCD / LCD BACKLIGHT MANAGEMENT
+// FONCTIONS LCD
 // ============================================================================
 void allumerLCD() {
   if (!lcdAllume) {
     lcd.backlight();
     lcdAllume = true;
-    Serial.println(F("LCD rallumé / LCD turned on"));
+    Serial.println(F("LCD allumé"));
   }
-  derniereActivite = millis(); // Mettre à jour l'activité
+  derniereActivite = millis();
 }
 
 void eteindreLCD() {
   if (lcdAllume) {
     lcd.noBacklight();
     lcdAllume = false;
-    Serial.println(F("LCD éteint / LCD turned off"));
+    Serial.println(F("LCD éteint"));
   }
 }
 
-// ============================================================================
-// GESTION DE L'AFFICHAGE LCD / LCD DISPLAY MANAGEMENT
-// ============================================================================
 void gererAffichageLCD(DateTime maintenant) {
   lcd.setCursor(0, 0);
   
   switch (modeActuel) {
     case MODE_NORMAL:
-      // Ligne 1: Heure / Line 1: Time
+      // Ligne 1: Heure
       if (maintenant.hour() < 10) lcd.print("0");
       lcd.print(maintenant.hour());
       lcd.print(":");
@@ -280,7 +284,7 @@ void gererAffichageLCD(DateTime maintenant) {
       lcd.print(maintenant.minute());
       lcd.print(F("      "));
       
-      // Ligne 2: Statut de la porte / Line 2: Door status
+      // Ligne 2: Statut porte
       lcd.setCursor(0, 1);
       if (etatActuel == OUVERTURE) {
         lcd.print(F("Ouverture...    "));
@@ -309,7 +313,6 @@ void gererAffichageLCD(DateTime maintenant) {
       if (maintenant.minute() < 10) lcd.print("0");
       lcd.print(maintenant.minute());
       lcd.print(F("      "));
-      
       lcd.setCursor(0, 1);
       lcd.print(F("Reglage heure   "));
       break;
@@ -325,7 +328,6 @@ void gererAffichageLCD(DateTime maintenant) {
         lcd.print(maintenant.minute());
       }
       lcd.print(F("      "));
-      
       lcd.setCursor(0, 1);
       lcd.print(F("Reglage minute  "));
       break;
@@ -335,7 +337,6 @@ void gererAffichageLCD(DateTime maintenant) {
         lcd.print(F("Seuil: "));
         lcd.print(seuilLumiere);
         lcd.print(F("     "));
-        
         lcd.setCursor(0, 1);
         int valeurActuelle = analogRead(CAPTEUR_LUMIERE);
         lcd.print(F("Actuel: "));
@@ -349,9 +350,8 @@ void gererAffichageLCD(DateTime maintenant) {
       if (timeoutOuverture < 10) lcd.print(" ");
       lcd.print(timeoutOuverture);
       lcd.print(F("s      "));
-      
       lcd.setCursor(0, 1);
-      lcd.print(F("Bref:+1 Dbl:-1  "));
+      lcd.print(F("Tourner encodeur"));
       break;
       
     case MODE_REGLAGE_TIMEOUT_FERMETURE:
@@ -359,15 +359,14 @@ void gererAffichageLCD(DateTime maintenant) {
       if (timeoutFermeture < 10) lcd.print(" ");
       lcd.print(timeoutFermeture);
       lcd.print(F("s      "));
-      
       lcd.setCursor(0, 1);
-      lcd.print(F("Bref:+1 Dbl:-1  "));
+      lcd.print(F("Tourner encodeur"));
       break;
   }
 }
 
 // ============================================================================
-// GESTION DE LA SAUVEGARDE EEPROM / EEPROM BACKUP MANAGEMENT
+// FONCTIONS EEPROM
 // ============================================================================
 void sauvegarderSeuil() {
   EEPROM.write(SEUIL_EEPROM_ADDR, seuilLumiere & 0xFF);
@@ -383,19 +382,16 @@ void sauvegarderTimeoutFermeture() {
 }
 
 void chargerParametresEEPROM() {
-  // Chargement du seuil / Loading threshold
   int seuilSauve = EEPROM.read(SEUIL_EEPROM_ADDR) | (EEPROM.read(SEUIL_EEPROM_ADDR + 1) << 8);
   if (seuilSauve >= 0 && seuilSauve <= 1023) {
     seuilLumiere = seuilSauve;
   }
   
-  // Chargement timeout ouverture / Loading opening timeout
   int timeoutOuv = EEPROM.read(TIMEOUT_OUVERTURE_ADDR);
   if (timeoutOuv >= 5 && timeoutOuv <= 60) {
     timeoutOuverture = timeoutOuv;
   }
   
-  // Chargement timeout fermeture / Loading closing timeout
   int timeoutFer = EEPROM.read(TIMEOUT_FERMETURE_ADDR);
   if (timeoutFer >= 5 && timeoutFer <= 60) {
     timeoutFermeture = timeoutFer;
@@ -403,11 +399,11 @@ void chargerParametresEEPROM() {
 }
 
 // ============================================================================
-// CONTRÔLE DU MOTEUR / MOTOR CONTROL
+// FONCTIONS MOTEUR
 // ============================================================================
 void ouvrirPorte() {
   if (!porteOuverte && (etatActuel == ARRET || etatActuel == ERREUR_OBSTACLE)) {
-    Serial.println(F("Début ouverture porte / Starting door opening"));
+    Serial.println(F("Début ouverture porte"));
     allumerLCD();
     etatActuel = OUVERTURE;
     debutMouvementPorte = millis();
@@ -418,7 +414,7 @@ void ouvrirPorte() {
 
 void fermerPorte() {
   if (porteOuverte && (etatActuel == ARRET || etatActuel == ERREUR_OBSTACLE)) {
-    Serial.println(F("Début fermeture porte / Starting door closing"));
+    Serial.println(F("Début fermeture porte"));
     allumerLCD();
     etatActuel = FERMETURE;
     debutMouvementPorte = millis();
@@ -437,13 +433,13 @@ void gererMouvementPorte() {
   switch (etatActuel) {
     case OUVERTURE:
       if (millis() - debutMouvementPorte > (unsigned long)timeoutOuverture * 1000) {
-        Serial.println(F("Timeout ouverture - Obstacle détecté / Opening timeout - Obstacle detected"));
+        Serial.println(F("Timeout ouverture - Obstacle"));
         arreterMoteur();
         etatActuel = ERREUR_OBSTACLE;
         allumerLCD();
       }
       else if (digitalRead(FIN_COURSE_HAUT) == LOW) {
-        Serial.println(F("Porte complètement ouverte / Door fully open"));
+        Serial.println(F("Porte ouverte"));
         arreterMoteur();
         porteOuverte = true;
       }
@@ -451,13 +447,13 @@ void gererMouvementPorte() {
       
     case FERMETURE:
       if (millis() - debutMouvementPorte > (unsigned long)timeoutFermeture * 1000) {
-        Serial.println(F("Timeout fermeture - Obstacle détecté / Closing timeout - Obstacle detected"));
+        Serial.println(F("Timeout fermeture - Obstacle"));
         arreterMoteur();
         etatActuel = ERREUR_OBSTACLE;
         allumerLCD();
       }
       else if (digitalRead(FIN_COURSE_BAS) == LOW) {
-        Serial.println(F("Porte complètement fermée / Door fully closed"));
+        Serial.println(F("Porte fermée"));
         arreterMoteur();
         porteOuverte = false;
       }
@@ -470,7 +466,7 @@ void gererMouvementPorte() {
 }
 
 // ============================================================================
-// GESTION DE LA LUMINOSITÉ / LIGHT MANAGEMENT
+// GESTION LUMINOSITÉ
 // ============================================================================
 void gererFermetureLumiere(int valeurLumiere, int heureActuelle) {
   if (!porteOuverte || heureActuelle <= 7) {
@@ -485,15 +481,15 @@ void gererFermetureLumiere(int valeurLumiere, int heureActuelle) {
       debutLumiereFaible = millis();
       dernierAllumageMinute = millis();
       allumerLCD();
-      Serial.println(F("Début détection lumière faible - temporisation 10 minutes / Start low light detection - 10 minutes delay"));
+      Serial.println(F("Début temporisation fermeture 10 min"));
     } else if (millis() - debutLumiereFaible >= TEMPO_FERMETURE) {
-      Serial.println(F("Temporisation écoulée - Fermeture automatique / Delay elapsed - Automatic closing"));
+      Serial.println(F("Temporisation écoulée - Fermeture auto"));
       fermerPorte();
       lumiereFaibleDetectee = false;
     }
   } else {
     if (lumiereFaibleDetectee) {
-      Serial.println(F("Lumière revenue - Annulation temporisation fermeture / Light returned - Closing delay cancelled"));
+      Serial.println(F("Lumière revenue - Annulation"));
       lumiereFaibleDetectee = false;
       debutLumiereFaible = 0;
     }
@@ -501,7 +497,7 @@ void gererFermetureLumiere(int valeurLumiere, int heureActuelle) {
 }
 
 // ============================================================================
-// GESTION DE LA LED DE COUPURE / POWER OUTAGE LED MANAGEMENT
+// LED COUPURE
 // ============================================================================
 void gererLEDCoupure() {
   if (coupureCourant) {
@@ -514,7 +510,3 @@ void gererLEDCoupure() {
     digitalWrite(LED_COUPURE, LOW);
   }
 }
-
-// ============================================================================
-// FIN DU PROGRAMME / END OF PROGRAM
-// ============================================================================
