@@ -166,9 +166,9 @@ bool afficherLuminosite = false;
 unsigned long dernierAlternanceLCD = 0;
 
 // Vérification RTC
-uint8_t derniere_seconde_rtc = 255;
+DateTime derniere_datetime_rtc;
 unsigned long derniere_verification_rtc = 0;
-bool rtc_verification_initialisee = false; // NOUVEAU: flag initialisation
+bool rtc_verification_initialisee = false;
 
 // Vérification capteur luminosité
 uint8_t compteur_valeur_extreme = 0;
@@ -505,20 +505,22 @@ void verifierRTC() {
   
   // Heure figée (vérifier toutes les 2 minutes)
   if (millis() - derniere_verification_rtc > 120000) {
-    // Première vérification : juste enregistrer la seconde
+    // Première vérification : juste enregistrer le DateTime complet
     if (!rtc_verification_initialisee) {
-      derniere_seconde_rtc = maintenant.second();
+      derniere_datetime_rtc = maintenant;
       rtc_verification_initialisee = true;
       Serial.println(F("Vérification RTC initialisée"));
     } else {
-      // Vérifications suivantes : comparer
-      if (maintenant.second() == derniere_seconde_rtc) {
+      // Vérifications suivantes : comparer les timestamps complets
+      // Si exactement le même timestamp après 2 minutes → RTC figé !
+      if (derniere_datetime_rtc.unixtime() == maintenant.unixtime()) {
         if (erreurActuelle != ERREUR_RTC_FIGE) {
-          Serial.println(F("ERREUR: RTC figé"));
+          Serial.println(F("ERREUR: RTC figé (timestamp identique après 2 min)"));
           erreurActuelle = ERREUR_RTC_FIGE;
         }
       }
-      derniere_seconde_rtc = maintenant.second();
+      // Enregistrer le nouveau timestamp pour prochaine comparaison
+      derniere_datetime_rtc = maintenant;
     }
     derniere_verification_rtc = millis();
   }

@@ -2,8 +2,6 @@
 
 > Système automatisé d'ouverture/fermeture de porte de poulailler basé sur Arduino Nano avec gestion de l'heure et de la luminosité.
 
-https://github.com/fbaillon19/poulailler-automatique/blob/main/photos/Porte_poulailler.jpeg
-
 ![Badge Arduino](https://img.shields.io/badge/Arduino-Nano-blue)
 ![Badge Licence](https://img.shields.io/badge/License-MIT-green)
 ![Badge Version](https://img.shields.io/badge/Version-1.4.0-orange)
@@ -17,6 +15,20 @@ https://github.com/fbaillon19/poulailler-automatique/blob/main/photos/Porte_poul
 **Version actuelle : 1.4.0** - Version production terrain avec gestion d'erreurs complète
 
 **✅ Testé et validé sur le terrain depuis plusieurs jours !**
+
+### Installation réelle
+
+![Vue extérieure](photos/Porte_poulailler.jpeg)
+*Porte automatique installée sur le poulailler*
+
+![Intérieur du boitier](photos/Boitier_interieur_nu.jpeg)
+*Indication du positionnement des vis de fixation dans le boîtier*
+
+![Couvercle boîtier](photos/Couvercle_interieur.jpeg)
+*Cablage du LCD et du matériel sur le couvercle*
+
+![Boîtier électronique](photos/Boitier_interieur_monte.jpeg)
+*Arduino Nano + encodeur rotatif dans boîtier étanche IP54*
 
 ## ✨ Fonctionnalités
 
