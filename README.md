@@ -19,15 +19,19 @@
 ### Installation réelle
 
 ![Vue extérieure](photos/Porte_poulailler.jpeg)
+
 *Porte automatique installée sur le poulailler*
 
 ![Intérieur du boitier](photos/Boitier_interieur_nu.jpeg)
+
 *Indication du positionnement des vis de fixation dans le boîtier*
 
 ![Couvercle boîtier](photos/Couvercle_interieur.jpeg)
+
 *Cablage du LCD et du matériel sur le couvercle*
 
 ![Boîtier électronique](photos/Boitier_interieur_monte.jpeg)
+
 *Arduino Nano + encodeur rotatif dans boîtier étanche IP54*
 
 ## ✨ Fonctionnalités
