@@ -2,7 +2,7 @@
 
 > Système automatisé d'ouverture/fermeture de porte de poulailler basé sur Arduino Nano avec gestion de l'heure et de la luminosité.
 
-https://github.com/fbaillon19/poulailler-automatique/blob/main/docs/photos/Porte_poulailler.jpeg
+https://github.com/fbaillon19/poulailler-automatique/blob/main/photos/Porte_poulailler.jpeg
 
 ![Badge Arduino](https://img.shields.io/badge/Arduino-Nano-blue)
 ![Badge Licence](https://img.shields.io/badge/License-MIT-green)
