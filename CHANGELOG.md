@@ -7,6 +7,58 @@ et ce projet adhère au [Versionnage Sémantique](https://semver.org/lang/fr/).
 
 ---
 
+## [1.4.0] - 2026-01-07 ⭐ **VERSION PRODUCTION**
+
+### 🎉 Ajouté - Retours terrain intégrés
+- **Heure minimum fermeture paramétrable** (15h-17h) : Ne jamais fermer avant cette heure
+  - Évite fermeture immédiate en hiver après ouverture (7h = nuit)
+  - Mode réglage heure + minutes
+- **Temporisation fermeture paramétrable** (10-30 minutes) : Délai anti-nuages configurable
+- **Affichage luminosité temps réel** : Alterne avec heure toutes les 3s sur LCD
+- **Calibration automatique au démarrage** : Fermeture complète puis ouverture
+  - Vérification capteurs fin de course
+  - Détection erreurs dès le démarrage
+- **Gestion d'erreurs complète** :
+  - Détection capteurs fin de course incohérents (2 activés)
+  - Détection capteur fin de course HS (timeout sans déclenchement)
+  - Détection RTC aberrant (année invalide 2025-2030)
+  - Détection RTC figé (heure ne progresse pas)
+  - Détection capteur luminosité HS (valeurs 0 ou 1023 constantes)
+  - Détection tension alimentation faible (< 4.5V)
+- **LED clignotement différencié** :
+  - 200ms = Erreur critique (arrêt automatique)
+  - 1s = Alerte (fonctionnement dégradé)
+  - 500ms = Coupure RTC (pile à changer)
+- **Acquittement erreurs** : Appui TRÈS long 5s pour reset
+- **10 modes de réglage** au total (contre 5 en v1.3.0)
+
+### 🔧 Modifié - Interface améliorée
+- **Appui long réduit à 1.5s** (au lieu de 3s) pour entrer en mode réglage
+- **Navigation par appui BREF** entre modes (au lieu d'appui long) - Plus pratique !
+- **Seuil par défaut 100** (au lieu de 300) - Validé sur terrain (utilisateur à 30)
+- **Messages LCD plus explicites** : Type d'erreur clairement affiché
+- **Structure EEPROM réorganisée** : Nouvelles adresses pour tous paramètres
+
+### 🐛 Corrigé
+- **Erreur RTC figé faux positif** : Ajout flag initialisation, vérification après 4 min
+- **Clignotement désagréable heures** : Nombre caractères identique ON/OFF
+- **Logique fermeture** : Vérification heure minimum avant fermeture automatique
+
+### 📚 Documentation
+- Ajout README détaillé v1.4.0
+- Mise à jour README.md principal
+- Guide gestion d'erreurs
+- Messages Serial détaillés pour debug
+
+### 🧪 Validation terrain
+- **Testé plusieurs jours** en conditions réelles
+- **Calibration démarrage** : Validée (détection capteur coincé par froid)
+- **Heure minimum fermeture** : Validée (pas de fermeture immédiate hiver)
+- **Seuil luminosité** : Ajusté terrain (100 par défaut, utilisateur à 30)
+- **Interface encodeur** : Navigation fluide et intuitive
+
+---
+
 ## [1.3.0] - 2025-12-26
 
 ### 🎉 Ajouté
@@ -162,6 +214,7 @@ et ce projet adhère au [Versionnage Sémantique](https://semver.org/lang/fr/).
 
 ---
 
+**[1.4.0]** : https://github.com/fbaillon19/poulailler-automatique/releases/tag/v1.4.0  
 **[1.3.0]** : https://github.com/fbaillon19/poulailler-automatique/releases/tag/v1.3.0  
 **[1.2.0]** : https://github.com/fbaillon19/poulailler-automatique/releases/tag/v1.2.0  
 **[1.1.0]** : https://github.com/fbaillon19/poulailler-automatique/releases/tag/v1.1.0  
