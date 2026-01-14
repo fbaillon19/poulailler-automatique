@@ -472,19 +472,31 @@ void verifierCapteursFinCourse() {
 }
 
 void verifierCapteurLuminosite() {
+  static uint8_t compteur_valeur_extreme = 0;
+  
   int lumiere = analogRead(CAPTEUR_LUMIERE);
   
-  if (lumiere == 0 || lumiere == 1023) {
-    compteur_valeur_extreme++;
-    if (compteur_valeur_extreme > 100) {
-      if (erreurActuelle != ALERTE_CAPTEUR_LUMIERE) {
-        Serial.print(F("ALERTE: Capteur luminosité valeur extrême ("));
-        Serial.print(lumiere);
-        Serial.println(F(")"));
-        erreurActuelle = ALERTE_CAPTEUR_LUMIERE;
+  // Vérification capteur UNIQUEMENT quand porte OUVERTE
+  // Si porte fermée : on n'a pas besoin du capteur, donc pas de vérification
+  if (porteOuverte) {
+    // Porte ouverte : valeurs extrêmes anormales
+    // - lumiere=0 : câble déconnecté ou capteur HS
+    // - lumiere=1023 : court-circuit ou capteur saturé
+    if (lumiere == 0 || lumiere == 1023) {
+      compteur_valeur_extreme++;
+      if (compteur_valeur_extreme > 100) { // 100 lectures consécutives (~100 secondes)
+        if (erreurActuelle != ALERTE_CAPTEUR_LUMIERE) {
+          Serial.print(F("ALERTE: Capteur luminosité valeur extrême avec porte ouverte ("));
+          Serial.print(lumiere);
+          Serial.println(F(")"));
+          erreurActuelle = ALERTE_CAPTEUR_LUMIERE;
+        }
       }
+    } else {
+      compteur_valeur_extreme = 0; // Reset si valeur normale
     }
   } else {
+    // Porte fermée : reset compteur (capteur non utilisé)
     compteur_valeur_extreme = 0;
   }
 }
