@@ -170,9 +170,6 @@ DateTime derniere_datetime_rtc;
 unsigned long derniere_verification_rtc = 0;
 bool rtc_verification_initialisee = false;
 
-// Vérification capteur luminosité
-uint8_t compteur_valeur_extreme = 0;
-
 // ============================================================================
 // FONCTION LECTURE TENSION / VCC READING FUNCTION
 // ============================================================================
@@ -472,32 +469,67 @@ void verifierCapteursFinCourse() {
 }
 
 void verifierCapteurLuminosite() {
-  static uint8_t compteur_valeur_extreme = 0;
+  static bool test_en_cours = false;
+  static bool premiere_lecture_nulle = false;
   
-  int lumiere = analogRead(CAPTEUR_LUMIERE);
+  DateTime maintenant = rtc.now();
+  int heure = maintenant.hour();
+  int minute = maintenant.minute();
+  int seconde = maintenant.second();
   
-  // Vérification capteur UNIQUEMENT quand porte OUVERTE
-  // Si porte fermée : on n'a pas besoin du capteur, donc pas de vérification
-  if (porteOuverte) {
-    // Porte ouverte : valeurs extrêmes anormales
-    // - lumiere=0 : câble déconnecté ou capteur HS
-    // - lumiere=1023 : court-circuit ou capteur saturé
-    if (lumiere == 0 || lumiere == 1023) {
-      compteur_valeur_extreme++;
-      if (compteur_valeur_extreme > 100) { // 100 lectures consécutives (~100 secondes)
-        if (erreurActuelle != ALERTE_CAPTEUR_LUMIERE) {
-          Serial.print(F("ALERTE: Capteur luminosité valeur extrême avec porte ouverte ("));
-          Serial.print(lumiere);
-          Serial.println(F(")"));
-          erreurActuelle = ALERTE_CAPTEUR_LUMIERE;
-        }
+  // Test quotidien à 13h avec confirmation 1 minute après
+  // On teste UNIQUEMENT lumiere=0 (nuit à 13h = capteur HS critique)
+  // lumiere=1023 (soleil) n'est pas dangereux, pas de test
+  
+  if (heure == 13 && minute == 0 && seconde == 0) {
+    // Premier test à 13:00:00
+    int lumiere = analogRead(CAPTEUR_LUMIERE);
+    
+    if (lumiere == 0) {
+      Serial.print(F("Test capteur 13h00: lumiere=0 (suspect), confirmation dans 1 min"));
+      premiere_lecture_nulle = true;
+      test_en_cours = true;
+    } else {
+      Serial.print(F("Test capteur 13h00: OK (valeur="));
+      Serial.print(lumiere);
+      Serial.println(F(")"));
+      
+      // Capteur OK → reset alerte si elle existait
+      if (erreurActuelle == ALERTE_CAPTEUR_LUMIERE) {
+        Serial.println(F("Capteur luminosité réparé"));
+        erreurActuelle = AUCUNE_ERREUR;
+      }
+      
+      premiere_lecture_nulle = false;
+      test_en_cours = false;
+    }
+  }
+  
+  // Confirmation à 13:01:00 si première lecture était nulle
+  if (heure == 13 && minute == 1 && seconde == 0 && test_en_cours && premiere_lecture_nulle) {
+    int lumiere = analogRead(CAPTEUR_LUMIERE);
+    
+    if (lumiere == 0) {
+      // Confirmé : capteur indique nuit à 13h → HS !
+      if (erreurActuelle != ALERTE_CAPTEUR_LUMIERE) {
+        Serial.println(F("ALERTE: Capteur luminosité HS confirmé (nuit à 13h)"));
+        erreurActuelle = ALERTE_CAPTEUR_LUMIERE;
       }
     } else {
-      compteur_valeur_extreme = 0; // Reset si valeur normale
+      // Fausse alerte, c'était juste un glitch
+      Serial.print(F("Test capteur 13h01: OK finalement (valeur="));
+      Serial.print(lumiere);
+      Serial.println(F(")"));
     }
-  } else {
-    // Porte fermée : reset compteur (capteur non utilisé)
-    compteur_valeur_extreme = 0;
+    
+    test_en_cours = false;
+    premiere_lecture_nulle = false;
+  }
+  
+  // Reset flags si on a raté la fenêtre de test
+  if (heure == 13 && minute >= 2) {
+    test_en_cours = false;
+    premiere_lecture_nulle = false;
   }
 }
 
